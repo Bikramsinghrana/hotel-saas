@@ -1,0 +1,4 @@
+/* Budget theme source CSS */
+body{font-family:Arial, sans-serif}
+.budget-header{background:#047857;color:#fff;padding:0.75rem}
+.hotel-list{display:flex;gap:1rem}

@@ -1,0 +1,5 @@
+/* Common public CSS */
+:root{--accent:#2563eb}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif}
+.container{max-width:1100px;margin:0 auto;padding:1rem}
+.button{background:var(--accent);color:#fff;padding:.5rem 1rem;border-radius:6px}

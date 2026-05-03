@@ -1,0 +1,5 @@
+/* Luxury theme source CSS */
+body { font-family: Inter, system-ui, Arial, sans-serif; }
+.luxury-header { background:#1f2937; color:#fff; padding:1rem }
+.wrap { max-width:1100px; margin:0 auto; padding:0 1rem }
+.nav a { margin-left:1rem; color:#fff }

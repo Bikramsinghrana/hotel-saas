@@ -17,7 +17,7 @@ class LoginController extends Controller
 
     public function showLoginForm()
     {
-        return view('auth.login');
+        return view('auth.login', ['isSeller' => false]);
     }
 
     public function login(Request $request)
@@ -28,7 +28,33 @@ class LoginController extends Controller
         ]);
 
         if ($this->authService->login($data)) {
-            return redirect()->intended('/');
+            return redirect()->intended(route('customer.dashboard', [], false) ?: '/customer/dashboard');
+        }
+
+        return back()->withErrors(['email' => 'Invalid credentials'])->withInput();
+    }
+
+    public function showSellerLoginForm()
+    {
+        return view('auth.login', ['isSeller' => true]);
+    }
+
+    public function sellerLogin(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if ($this->authService->login($data)) {
+            $user = \Illuminate\Support\Facades\Auth::user();
+            
+            // If they are a pure customer trying to use the seller login, kick them to customer dashboard
+            if ($user && $user->hasRole(\App\Enums\RoleEnum::CUSTOMER->value) && $user->roles->count() === 1) {
+                return redirect()->intended(route('customer.dashboard', [], false) ?: '/customer/dashboard');
+            }
+            
+            return redirect()->intended(route('admin.dashboard', [], false) ?: '/admin/dashboard');
         }
 
         return back()->withErrors(['email' => 'Invalid credentials'])->withInput();

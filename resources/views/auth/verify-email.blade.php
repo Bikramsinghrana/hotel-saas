@@ -1,17 +1,22 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
-@section('content')
-    @include('partials.theme-assets')
-    <div class="max-w-md mx-auto py-12 px-6">
-        <h1 class="text-2xl font-semibold mb-4">Verify Your Email</h1>
+@section('auth-content')
+<div class="auth-header">
+    <h1 class="auth-title">Verify Email</h1>
+</div>
 
-        <p class="mb-4">Before continuing, please check your email for a verification link.</p>
+<p class="auth-desc">
+    Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.
+</p>
 
-        <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
-            <div class="flex items-center justify-end">
-                <button type="submit" data-loader class="px-4 py-2 bg-blue-600 text-white rounded" data-loading-text="Sending">Resend verification</button>
-            </div>
-        </form>
+@if (session('status') == 'verification-link-sent')
+    <div class="auth-status">
+        A new verification link has been sent to the email address you provided during registration.
     </div>
+@endif
+
+<form method="POST" action="{{ route('verification.send') }}">
+    @csrf
+    <button type="submit" class="auth-btn">Resend Verification Email</button>
+</form>
 @endsection

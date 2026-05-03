@@ -18,7 +18,10 @@ class PageController extends Controller
             try {
                 $host = $request->getHost();
                 $tenant = \App\Models\Tenant::where('domain', $host)->first();
-                if (! $tenant && session()->has('tenant_id')) {
+                if ($tenant) {
+                    session(['tenant_id' => $tenant->id]);
+                    session(['theme' => $tenant->theme]);
+                } elseif (! $tenant && session()->has('tenant_id')) {
                     $tenant = \App\Models\Tenant::find(session('tenant_id'));
                 }
             } catch (\Throwable $e) {

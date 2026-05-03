@@ -19,15 +19,25 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
+        // Seed themes first
+        $this->call(ThemeSeeder::class);
+
         // Roles & permissions should be seeded before demo data
         if (class_exists(\Database\Seeders\RolesAndPermissionsSeeder::class)) {
             $this->call(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        }
+
+        if (class_exists(\Database\Seeders\UserSeeder::class)) {
+            $this->call(\Database\Seeders\UserSeeder::class);
         }
 
         $this->call(InitialDemoSeeder::class);
 
         if (class_exists(\Database\Seeders\CmsSeeder::class)) {
             $this->call(\Database\Seeders\CmsSeeder::class);
+        }
+        if (class_exists(\Database\Seeders\UserSeeder::class)) {
+            $this->call(\Database\Seeders\UserSeeder::class);
         }
     }
 }

@@ -6,7 +6,18 @@ use Illuminate\Support\Facades\Cache;
 if (! function_exists('tenant')) {
     function tenant(): ?Tenant
     {
-        return app('tenant') ?? (session('tenant_id') ? Tenant::find(session('tenant_id')) : null);
+        if (app()->bound('tenant')) {
+            return app('tenant');
+        }
+        return session('tenant_id') ? Tenant::find(session('tenant_id')) : null;
+    }
+}
+
+if (! function_exists('isSingleHotel')) {
+    function isSingleHotel(): bool
+    {
+        $t = tenant();
+        return $t && $t->subTheme && $t->subTheme->type === 'single_hotel';
     }
 }
 

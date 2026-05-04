@@ -4,57 +4,71 @@ namespace Database\Seeders;
 
 use App\Models\Navigation;
 use App\Models\Tenant;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
+use App\Enums\ModuleStatusEnum;
 
 class NavigationSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get all tenants (for multi-tenant support)
         $tenants = Tenant::all();
 
         if ($tenants->isEmpty()) {
-            // If no tenants exist, create a default one
             $tenants = [Tenant::create(['name' => 'Default Hotel', 'domain' => 'localhost'])];
         }
 
-        // Default navigation items for all merchants
         $defaultNavigations = [
             [
                 'title' => 'Home',
-                'content' => 'Welcome to our hotel',
+                'slug' => 'home',
                 'url' => '/',
+                'description' => 'Main entry point of the website.',
+                'status' => ModuleStatusEnum::PUBLISHED,
                 'order' => 1,
                 'is_active' => true,
             ],
             [
-                'title' => 'About',
-                'content' => 'Learn more about us',
+                'title' => 'About Us',
+                'slug' => 'about-us',
                 'url' => '/about',
+                'description' => 'Information about our hotel and history.',
+                'status' => ModuleStatusEnum::PUBLISHED,
                 'order' => 2,
                 'is_active' => true,
             ],
             [
-                'title' => 'Rooms',
-                'content' => 'Browse our rooms',
+                'title' => 'Rooms & Suites',
+                'slug' => 'rooms',
                 'url' => '/rooms',
+                'description' => 'Browse our luxurious room options.',
+                'status' => ModuleStatusEnum::PUBLISHED,
                 'order' => 3,
+                'is_active' => true,
+            ],
+            [
+                'title' => 'Contact',
+                'slug' => 'contact',
+                'url' => '/contact',
+                'description' => 'Get in touch with us.',
+                'status' => ModuleStatusEnum::PUBLISHED,
+                'order' => 4,
                 'is_active' => true,
             ],
         ];
 
-        // Insert default navigations for each tenant
         foreach ($tenants as $tenant) {
             foreach ($defaultNavigations as $nav) {
-                Navigation::firstOrCreate(
+                Navigation::updateOrCreate(
                     [
                         'tenant_id' => $tenant->id,
-                        'title' => $nav['title'],
+                        'slug' => $nav['slug'],
                     ],
                     [
-                        'content' => $nav['content'],
+                        'title' => $nav['title'],
                         'url' => $nav['url'],
+                        'description' => $nav['description'],
+                        'status' => $nav['status'],
                         'order' => $nav['order'],
                         'is_active' => $nav['is_active'],
                     ]

@@ -11,7 +11,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register PageModuleService as singleton
+        $this->app->singleton('page-module-service', function ($app) {
+            return new \App\Services\PageModuleService();
+        });
     }
 
     /**

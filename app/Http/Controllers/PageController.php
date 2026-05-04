@@ -70,12 +70,22 @@ class PageController extends Controller
         }
 
         // Load navigation items for tenant
-        if ($tenant && class_exists(\App\Models\Navigation::class)) {
+        if (class_exists(\App\Models\Navigation::class)) {
             try {
-                $navigations = \App\Models\Navigation::where('tenant_id', $tenant->id)
-                    ->active()
-                    ->ordered()
-                    ->get();
+                $query = \App\Models\Navigation::active()->ordered();
+                
+                // If tenant found, load tenant-specific navigations
+                if ($tenant) {
+                    $query->where('tenant_id', $tenant->id);
+                } else {
+                    // For guests: load from first tenant or all active navigations
+                    $firstTenant = \App\Models\Tenant::first();
+                    if ($firstTenant) {
+                        $query->where('tenant_id', $firstTenant->id);
+                    }
+                }
+                
+                $navigations = $query->get();
             } catch (\Throwable $e) {
                 $navigations = collect();
             }

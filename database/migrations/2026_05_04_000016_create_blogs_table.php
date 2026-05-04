@@ -7,17 +7,20 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up()
     {
-        Schema::create('navigations', function (Blueprint $table) {
+        Schema::create('blogs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
             $table->string('title');
             $table->string('slug');
-            $table->string('url')->nullable();
-            $table->text('description')->nullable();
+            $table->longText('content')->nullable();
+            $table->text('excerpt')->nullable();
+            $table->string('featured_image')->nullable();
             $table->string('status')->default('draft'); // published, draft
             $table->boolean('is_active')->default(true);
-            $table->integer('order')->default(0);
+            $table->text('meta_title')->nullable();
+            $table->text('meta_description')->nullable();
             $table->timestamps();
+            $table->softDeletes();
             
             $table->index(['tenant_id', 'status', 'is_active']);
             $table->unique(['tenant_id', 'slug']);
@@ -26,6 +29,6 @@ return new class extends Migration {
 
     public function down()
     {
-        Schema::dropIfExists('navigations');
+        Schema::dropIfExists('blogs');
     }
 };

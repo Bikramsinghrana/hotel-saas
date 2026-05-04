@@ -9,8 +9,16 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('roles', App\Http\Controllers\Admin\RoleController::class);
     
     // Navigation Management
-    Route::resource('navigation', App\Http\Controllers\Admin\NavigationController::class);
-    Route::post('navigation/update-order', [App\Http\Controllers\Admin\NavigationController::class, 'updateOrder'])->name('navigation.update-order');
+    Route::resource('navigations', App\Http\Controllers\Admin\NavigationController::class);
+    Route::post('navigations/{navigation}/toggle-active', [App\Http\Controllers\Admin\NavigationController::class, 'toggleActive'])->name('navigations.toggle-active');
+    
+    // Blog Management
+    Route::resource('blogs', App\Http\Controllers\Admin\BlogController::class);
+    Route::post('blogs/{blog}/toggle-active', [App\Http\Controllers\Admin\BlogController::class, 'toggleActive'])->name('blogs.toggle-active');
+
+    // Sidebar Management
+    Route::resource('sidebars', App\Http\Controllers\Admin\SidebarController::class);
+    Route::post('sidebars/{sidebar}/toggle-active', [App\Http\Controllers\Admin\SidebarController::class, 'toggleActive'])->name('sidebars.toggle-active');
     
     // Settings & Themes
     Route::get('settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');

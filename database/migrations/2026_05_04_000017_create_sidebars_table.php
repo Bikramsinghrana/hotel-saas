@@ -7,13 +7,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up()
     {
-        Schema::create('navigations', function (Blueprint $table) {
+        Schema::create('sidebars', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
             $table->string('title');
             $table->string('slug');
-            $table->string('url')->nullable();
-            $table->text('description')->nullable();
+            $table->longText('content')->nullable();
             $table->string('status')->default('draft'); // published, draft
             $table->boolean('is_active')->default(true);
             $table->integer('order')->default(0);
@@ -26,6 +25,6 @@ return new class extends Migration {
 
     public function down()
     {
-        Schema::dropIfExists('navigations');
+        Schema::dropIfExists('sidebars');
     }
 };

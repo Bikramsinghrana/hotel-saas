@@ -12,6 +12,7 @@ class Navigation extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'status' => \App\Enums\ModuleStatusEnum::class,
         'is_active' => 'boolean',
     ];
 

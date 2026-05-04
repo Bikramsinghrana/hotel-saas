@@ -218,7 +218,7 @@
 </head>
 <body>
 
-    @include('components.frontend.nav')
+    @include('components.frontend.nav', ['navigations' => $navigations ?? collect()])
 
     <!-- CONTENT -->
     <main>

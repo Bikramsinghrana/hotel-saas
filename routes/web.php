@@ -1,56 +1,47 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
+use App\Http\Controllers\User\ProfileController;
 
-Route::get('/', [App\Http\Controllers\PageController::class, 'index']);
+Route::get('/', [PageController::class, 'index']);
 
-// Admin role management (requires spatie/permission configured)
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('roles', App\Http\Controllers\Admin\RoleController::class);
-    
-    // Navigation Management
-    Route::resource('navigations', App\Http\Controllers\Admin\NavigationController::class);
-    Route::post('navigations/{navigation}/toggle-active', [App\Http\Controllers\Admin\NavigationController::class, 'toggleActive'])->name('navigations.toggle-active');
-    
-    // Blog Management
-    Route::resource('blogs', App\Http\Controllers\Admin\BlogController::class);
-    Route::post('blogs/{blog}/toggle-active', [App\Http\Controllers\Admin\BlogController::class, 'toggleActive'])->name('blogs.toggle-active');
-
-    // Sidebar Management
-    Route::resource('sidebars', App\Http\Controllers\Admin\SidebarController::class);
-    Route::post('sidebars/{sidebar}/toggle-active', [App\Http\Controllers\Admin\SidebarController::class, 'toggleActive'])->name('sidebars.toggle-active');
-    
-    // Settings & Themes
-    Route::get('settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
-    Route::post('settings/theme/main/activate', [App\Http\Controllers\Admin\SettingController::class, 'activateMainTheme'])->name('settings.theme.main.activate');
-    Route::post('settings/theme/activate', [App\Http\Controllers\Admin\SettingController::class, 'activateTheme'])->name('settings.theme.activate');
-
-    Route::get('dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('guests', [App\Http\Controllers\Admin\GuestController::class, 'index'])->name('guests.index');
+// Authentication routes
+Route::controller(LoginController::class)->group(function () {
+    Route::get('login', 'showLoginForm')->name('login');
+    Route::post('login', 'login');
+    Route::get('seller/login', 'showSellerLoginForm')->name('seller.login');
+    Route::post('seller/login', 'sellerLogin');
+    Route::post('logout', 'logout')->name('logout');
 });
 
-// Authentication routes (simple controller-based)
-Route::get('login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
-Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+Route::controller(RegisterController::class)->group(function () {
+    Route::get('register', 'showRegistrationForm')->name('register');
+    Route::post('register', 'register');
+});
 
-Route::get('seller/login', [App\Http\Controllers\Auth\LoginController::class, 'showSellerLoginForm'])->name('seller.login');
-Route::post('seller/login', [App\Http\Controllers\Auth\LoginController::class, 'sellerLogin']);
+Route::controller(ForgotPasswordController::class)->group(function () {
+    Route::get('password/reset', 'showLinkRequestForm')->name('password.request');
+    Route::post('password/email', 'sendResetLinkEmail')->name('password.email');
+});
 
-Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
-
-Route::get('register', [App\Http\Controllers\Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('register', [App\Http\Controllers\Auth\RegisterController::class, 'register']);
-
-Route::get('password/reset', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-Route::post('password/email', [App\Http\Controllers\Auth\ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-Route::get('password/reset/{token}', [App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-Route::post('password/reset', [App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])->name('password.update');
+Route::controller(ResetPasswordController::class)->group(function () {
+    Route::get('password/reset/{token}', 'showResetForm')->name('password.reset');
+    Route::post('password/reset', 'reset')->name('password.update');
+});
 
 // User profile routes & Customer Dashboard
 Route::middleware('auth')->group(function () {
-    Route::get('customer/dashboard', [App\Http\Controllers\Customer\DashboardController::class, 'index'])->name('customer.dashboard');
+    Route::get('customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
     
-    Route::get('profile', [App\Http\Controllers\User\ProfileController::class, 'show'])->name('profile.show');
-    Route::get('profile/edit', [App\Http\Controllers\User\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('profile', [App\Http\Controllers\User\ProfileController::class, 'update'])->name('profile.update');
+    Route::controller(ProfileController::class)->prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', 'show')->name('show');
+        Route::get('edit', 'edit')->name('edit');
+        Route::post('/', 'update')->name('update');
+    });
 });

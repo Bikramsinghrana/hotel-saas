@@ -33,10 +33,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call(InitialDemoSeeder::class);
 
-        // Seed page modules (navbar, blog, sidebar)
-        if (class_exists(\Database\Seeders\PageModuleSeeder::class)) {
-            $this->call(\Database\Seeders\PageModuleSeeder::class);
-        }
 
         // Seed navigation items for all tenants
         $this->call(NavigationSeeder::class);

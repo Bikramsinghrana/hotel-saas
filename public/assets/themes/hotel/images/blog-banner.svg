@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="blogGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C86450;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#854434;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="400" fill="url(#blogGradient)"/>
+  <g opacity="0.15" fill="#ffffff">
+    <rect x="80" y="80" width="140" height="100"/>
+    <rect x="350" y="120" width="140" height="100"/>
+    <rect x="620" y="90" width="140" height="100"/>
+    <rect x="890" y="130" width="140" height="100"/>
+  </g>
+  <text x="600" y="180" font-family="Arial, sans-serif" font-size="52" font-weight="bold" fill="#ffffff" text-anchor="middle">Our Blog</text>
+  <text x="600" y="240" font-family="Arial, sans-serif" font-size="24" fill="#ffffff" text-anchor="middle" opacity="0.9">Travel Tips, Stories & Hotel Updates</text>
+</svg>

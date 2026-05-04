@@ -44,6 +44,22 @@
             z-index: 50;
             transition: all 0.3s;
         }
+
+        /* Onboarding pulse animation for the "Platform Setup" link */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(250,204,21,0.5); }
+            50% { box-shadow: 0 0 0 6px rgba(250,204,21,0); }
+        }
+        .setup-pulse {
+            animation: pulse-glow 1.8s ease-in-out infinite;
+            background: rgba(250,204,21,0.12) !important;
+            color: #fbbf24 !important;
+            border: 1px solid rgba(250,204,21,0.35);
+        }
+        .setup-pulse:hover {
+            background: rgba(250,204,21,0.2) !important;
+            color: #fbbf24 !important;
+        }
         .sidebar-brand {
             height: var(--header-h);
             display: flex;

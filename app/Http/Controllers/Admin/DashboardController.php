@@ -12,10 +12,19 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $tenant = tenant();
+
+        // If no industry (main theme) is selected, force the admin to setup first
+        if (!$tenant || !$tenant->theme_id) {
+            return redirect()->route('admin.settings.index')
+                ->with('setup_info', 'Welcome! Please select your primary industry to unlock your dashboard.');
+        }
+
+        // If no sub-theme (layout) is selected yet, still allow dashboard but hint them
         $hotels = Hotel::count();
         $bookings = Booking::count();
         $users = User::count();
 
-        return view('admin.dashboard', compact('hotels','bookings','users'));
+        return view('admin.dashboard', compact('hotels', 'bookings', 'users'));
     }
 }

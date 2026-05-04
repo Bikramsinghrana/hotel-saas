@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="aboutGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B6F47;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5a4a2f;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="400" fill="url(#aboutGradient)"/>
+  <g opacity="0.2" stroke="#ffffff" stroke-width="2" fill="none">
+    <rect x="100" y="50" width="150" height="150"/>
+    <rect x="400" y="80" width="200" height="200"/>
+    <rect x="800" y="60" width="180" height="180"/>
+  </g>
+  <text x="600" y="180" font-family="Arial, sans-serif" font-size="52" font-weight="bold" fill="#ffffff" text-anchor="middle">About Us</text>
+  <text x="600" y="240" font-family="Arial, sans-serif" font-size="24" fill="#ffffff" text-anchor="middle" opacity="0.9">Decades of Excellence in Hospitality</text>
+</svg>

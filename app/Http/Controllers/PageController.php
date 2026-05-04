@@ -11,6 +11,7 @@ class PageController extends Controller
         $tenant = null;
         $theme = null;
         $hotels = collect();
+        $navigations = collect();
         $useDummy = false;
 
         // Resolve tenant from session or hostname when Tenant model exists
@@ -20,8 +21,7 @@ class PageController extends Controller
                 $tenant = \App\Models\Tenant::where('domain', $host)->first();
                 if ($tenant) {
                     session(['tenant_id' => $tenant->id]);
-                    session(['theme' => $tenant->theme]);
-                } elseif (! $tenant && session()->has('tenant_id')) {
+                } elseif (session()->has('tenant_id')) {
                     $tenant = \App\Models\Tenant::find(session('tenant_id'));
                 }
             } catch (\Throwable $e) {
@@ -64,6 +64,23 @@ class PageController extends Controller
             ]);
         }
 
-        return view('welcome', compact('hotels', 'tenant', 'theme', 'useDummy'));
+        // If the tenant has no active theme/industry, show a Coming Soon page
+        if ($tenant && !$tenant->theme_id) {
+            return view('coming-soon', compact('tenant'));
+        }
+
+        // Load navigation items for tenant
+        if ($tenant && class_exists(\App\Models\Navigation::class)) {
+            try {
+                $navigations = \App\Models\Navigation::where('tenant_id', $tenant->id)
+                    ->active()
+                    ->ordered()
+                    ->get();
+            } catch (\Throwable $e) {
+                $navigations = collect();
+            }
+        }
+
+        return view('welcome', compact('hotels', 'tenant', 'theme', 'navigations', 'useDummy'));
     }
 }

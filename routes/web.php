@@ -8,6 +8,10 @@ Route::get('/', [App\Http\Controllers\PageController::class, 'index']);
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('roles', App\Http\Controllers\Admin\RoleController::class);
     
+    // Navigation Management
+    Route::resource('navigation', App\Http\Controllers\Admin\NavigationController::class);
+    Route::post('navigation/update-order', [App\Http\Controllers\Admin\NavigationController::class, 'updateOrder'])->name('navigation.update-order');
+    
     // Settings & Themes
     Route::get('settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
     Route::post('settings/theme/main/activate', [App\Http\Controllers\Admin\SettingController::class, 'activateMainTheme'])->name('settings.theme.main.activate');

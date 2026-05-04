@@ -7,11 +7,15 @@
         </a>
 
         <ul class="navbar-nav">
-            <li><a href="/">Home</a></li>
-            <li><a href="/#rooms">Rooms</a></li>
-            <li><a href="/#amenities">Amenities</a></li>
-            <li><a href="/#book">Book Now</a></li>
-            <li><a href="/#reviews">Reviews</a></li>
+            @forelse($navigations ?? collect() as $nav)
+                <li><a href="{{ $nav->url }}" title="{{ $nav->content }}">{{ $nav->title }}</a></li>
+            @empty
+                {{-- Fallback navigation if no dynamic navigation is configured --}}
+                <li><a href="/">Home</a></li>
+                <li><a href="/#rooms">Rooms</a></li>
+                <li><a href="/#amenities">Amenities</a></li>
+                <li><a href="/#book">Book Now</a></li>
+            @endforelse
         </ul>
 
         <div class="navbar-actions">

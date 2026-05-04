@@ -48,12 +48,20 @@ class LoginController extends Controller
 
         if ($this->authService->login($data)) {
             $user = \Illuminate\Support\Facades\Auth::user();
-            
-            // If they are a pure customer trying to use the seller login, kick them to customer dashboard
+
+            // If they are a pure customer trying to use the seller login, kick them out
             if ($user && $user->hasRole(\App\Enums\RoleEnum::CUSTOMER->value) && $user->roles->count() === 1) {
                 return redirect()->intended(route('customer.dashboard', [], false) ?: '/customer/dashboard');
             }
-            
+
+            // ── KEY FIX ──────────────────────────────────────────────────────────
+            // Store the tenant_id in session right after login so that tenant()
+            // helper works correctly on every subsequent request in the admin panel.
+            if ($user && $user->tenant_id) {
+                session(['tenant_id' => $user->tenant_id]);
+            }
+            // ─────────────────────────────────────────────────────────────────────
+
             return redirect()->intended(route('admin.dashboard', [], false) ?: '/admin/dashboard');
         }
 

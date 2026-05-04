@@ -6,10 +6,27 @@ use Illuminate\Support\Facades\Cache;
 if (! function_exists('tenant')) {
     function tenant(): ?Tenant
     {
+        // Priority 1: session (most reliable after login sets it)
+        if (session()->has('tenant_id')) {
+            return Tenant::find(session('tenant_id'));
+        }
+
+        // Priority 2: authenticated user's tenant_id (handles cases where session wasn't set)
+        if (auth()->check() && auth()->user()->tenant_id) {
+            $t = Tenant::find(auth()->user()->tenant_id);
+            if ($t) {
+                // Backfill the session so subsequent requests are fast
+                session(['tenant_id' => $t->id]);
+                return $t;
+            }
+        }
+
+        // Priority 3: service container (set by a TenantMiddleware, if present)
         if (app()->bound('tenant')) {
             return app('tenant');
         }
-        return session('tenant_id') ? Tenant::find(session('tenant_id')) : null;
+
+        return null;
     }
 }
 

@@ -153,34 +153,50 @@
 
     <!-- Settings Content -->
     <div class="settings-content">
-        
+
+        @if(session('setup_info'))
+        <div style="background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <span style="font-size: 2rem;">🚀</span>
+            <div>
+                <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem;">Welcome to Your New Platform!</div>
+                <div style="font-size: 0.9rem; color: #94a3b8;">{{ session('setup_info') }}</div>
+            </div>
+        </div>
+        @endif
+
         <!-- Main Theme Selection -->
         <div class="admin-card">
             <h2 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">Primary Industry</h2>
             <p style="color: #64748b; font-size: 0.9rem;">Select your primary industry. This determines what layouts and features are available.</p>
 
-            <div class="theme-grid">
+            <div class="theme-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
                 @foreach($themes as $theme)
-                    <div class="theme-card {{ $activeThemeId == $theme->id ? 'active' : '' }}" style="border-width: 2px;">
-                        <div class="theme-preview" style="height: 100px;">
-                            @if($activeThemeId == $theme->id)
-                                <div class="theme-badge">Active</div>
+                    @php $isActiveIndustry = $activeThemeId == $theme->id; @endphp
+                    <div class="theme-card {{ $isActiveIndustry ? 'active' : '' }}" style="border-width: 2px; {{ $isActiveIndustry ? 'border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light);' : '' }}">
+                        <div class="theme-preview" style="height: 110px; background: {{ $isActiveIndustry ? 'linear-gradient(135deg, #f0fdf4, #dcfce7)' : '#f8fafc' }};">
+                            @if($isActiveIndustry)
+                                <div class="theme-badge" style="background: var(--primary);">✓ Active</div>
                             @endif
-                            <div class="theme-preview-icon">
+                            <div style="font-size: 3.5rem; line-height: 1;">
                                 {{ $theme->key == 'hotel' ? '🏨' : '🍽️' }}
                             </div>
                         </div>
-                        <div class="theme-info" style="padding: 1rem;">
-                            <div class="theme-title" style="font-size: 1.2rem; text-align: center;">{{ $theme->name }}</div>
-                            <p style="text-align: center; font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">{{ $theme->description }}</p>
-                            @if($activeThemeId != $theme->id)
+                        <div style="padding: 1.25rem; text-align: center;">
+                            <div style="font-size: 1.15rem; font-weight: 700; color: {{ $isActiveIndustry ? 'var(--primary-dark)' : '#0f172a' }}; margin-bottom: 0.35rem;">
+                                {{ $theme->name }}
+                            </div>
+                            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; line-height: 1.4;">{{ $theme->description }}</p>
+
+                            @if($isActiveIndustry)
+                                <div style="background: var(--primary-light); color: var(--primary-dark); border-radius: 8px; padding: 0.6rem; font-weight: 700; font-size: 0.85rem;">
+                                    ✓ Currently Active
+                                </div>
+                            @else
                                 <form method="POST" action="{{ route('admin.settings.theme.main.activate') }}" class="ajax-form">
                                     @csrf
                                     <input type="hidden" name="theme_id" value="{{ $theme->id }}">
                                     <button type="submit" class="btn btn-secondary" style="width: 100%;">Select Industry</button>
                                 </form>
-                            @else
-                                <button disabled class="btn" style="width: 100%; background: #f1f5f9; color: #94a3b8; cursor: not-allowed;">Currently Selected</button>
                             @endif
                         </div>
                     </div>

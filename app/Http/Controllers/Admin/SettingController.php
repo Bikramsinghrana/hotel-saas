@@ -26,27 +26,51 @@ class SettingController extends Controller
             'theme_id' => 'required|exists:themes,id'
         ]);
 
-        $theme = Theme::find($request->theme_id);
+        $theme  = Theme::find($request->theme_id);
         $tenant = tenant();
 
+        // ── Debug-friendly null guard ─────────────────────────────────────────
         if (!$tenant) {
-            return response()->json(['message' => 'No active tenant found.'], 400);
+            // Try one more time directly from the authenticated user
+            $user = auth()->user();
+            if ($user && $user->tenant_id) {
+                $tenant = \App\Models\Tenant::find($user->tenant_id);
+                session(['tenant_id' => $user->tenant_id]);
+            }
         }
 
-        $tenant->theme_id = $theme->id;
-        
-        // If the current sub_theme doesn't belong to the newly selected main theme, reset it to the first available
-        if (!$tenant->sub_theme_id || SubTheme::find($tenant->sub_theme_id)->theme_id != $theme->id) {
-            $firstSubTheme = $theme->subThemes()->first();
-            $tenant->sub_theme_id = $firstSubTheme ? $firstSubTheme->id : null;
+        if (!$tenant) {
+            return response()->json([
+                'message' => 'No active tenant found. Your user account may not be linked to a tenant. Please contact support.',
+            ], 400);
         }
+        // ─────────────────────────────────────────────────────────────────────
 
-        $tenant->save();
+        try {
+            $tenant->theme_id = $theme->id;
 
-        return response()->json([
-            'message' => 'Industry theme selected successfully!',
-            'reload' => true
-        ]);
+            // Reset sub_theme if it doesn't belong to this main theme
+            if ($tenant->sub_theme_id) {
+                $currentSub = SubTheme::find($tenant->sub_theme_id);
+                if (!$currentSub || $currentSub->theme_id != $theme->id) {
+                    $tenant->sub_theme_id = null;
+                }
+            }
+
+            $tenant->save();
+            session(['tenant_id' => $tenant->id]);
+
+            return response()->json([
+                'message' => '✅ Industry set to <strong>' . $theme->name . '</strong>! Now choose a layout below.',
+                'reload'  => true,
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('activateMainTheme failed', ['error' => $e->getMessage(), 'tenant' => $tenant->id]);
+            return response()->json([
+                'message' => 'Could not save the theme. Error: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function activateTheme(Request $request)
@@ -66,8 +90,11 @@ class SettingController extends Controller
         $tenant->sub_theme_id = $subTheme->id;
         $tenant->save();
 
+        // Refresh session
+        session(['tenant_id' => $tenant->id]);
+
         return response()->json([
-            'message' => 'Layout activated successfully! The dashboard layout has been updated.',
+            'message' => '🎉 Layout <strong>' . $subTheme->name . '</strong> activated! Your dashboard is now fully unlocked.',
             'reload' => true
         ]);
     }

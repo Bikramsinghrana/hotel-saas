@@ -45,8 +45,8 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'success',
                     title: 'Success!',
-                    text: response.message || 'Operation completed successfully.',
-                    timer: 2000,
+                    html: response.message || 'Operation completed successfully.',
+                    timer: 2500,
                     showConfirmButton: false
                 }).then(() => {
                     if(response.redirect) {
@@ -54,7 +54,6 @@ $(document).ready(function() {
                     } else if (response.reload) {
                         window.location.reload();
                     } else {
-                        // Optionally clear the form
                         $form[0].reset();
                     }
                 });

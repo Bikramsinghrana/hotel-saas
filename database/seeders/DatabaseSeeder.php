@@ -33,6 +33,9 @@ class DatabaseSeeder extends Seeder
 
         $this->call(InitialDemoSeeder::class);
 
+        // Seed navigation items for all tenants
+        $this->call(NavigationSeeder::class);
+
         if (class_exists(\Database\Seeders\CmsSeeder::class)) {
             $this->call(\Database\Seeders\CmsSeeder::class);
         }

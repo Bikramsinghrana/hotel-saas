@@ -13,13 +13,14 @@ return new class extends Migration {
             $table->string('name');
             $table->text('description')->nullable();
             $table->unsignedTinyInteger('rating')->default(3);
-            $table->string('status')->default('draft');
+            $table->enum('status', ['pending', 'draft', 'active', 'inactive'])->default('draft');
             $table->json('address')->nullable();
             $table->json('nearby')->nullable();
             $table->decimal('base_price',10,2)->default(0);
             $table->decimal('discount',8,2)->default(0);
             $table->decimal('tax',8,2)->default(0);
             $table->json('facilities')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

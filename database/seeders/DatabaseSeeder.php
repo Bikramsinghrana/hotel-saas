@@ -32,8 +32,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call(InitialDemoSeeder::class);
-
-
+        
         // Seed navigation items for all tenants
         $this->call(NavigationSeeder::class);
 
@@ -43,5 +42,6 @@ class DatabaseSeeder extends Seeder
         if (class_exists(\Database\Seeders\UserSeeder::class)) {
             $this->call(\Database\Seeders\UserSeeder::class);
         }
+        $this->call(RoomTypeSeeder::class);
     }
 }

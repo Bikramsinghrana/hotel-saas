@@ -18,6 +18,8 @@ return new class extends Migration {
             $table->decimal('discount',8,2)->default(0);
             $table->decimal('tax',8,2)->default(0);
             $table->json('facilities')->nullable();
+            $table->enum('status', ['pending', 'draft', 'active', 'inactive'])->default('draft');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

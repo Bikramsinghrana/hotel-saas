@@ -135,6 +135,15 @@ body {
     top: 0;
     z-index: 1000;
 }
+.header-actions { display: flex; align-items: center; gap: 1.5rem; }
+.header-link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.header-link:hover { color: var(--primary); }
 .user-menu {
     display: flex;
     align-items: center;
@@ -152,6 +161,7 @@ body {
     color: #fff;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700;
+    box-shadow: 0 2px 5px rgba(22, 163, 74, 0.2);
 }
 
 /* CONTENT */
@@ -167,6 +177,7 @@ body {
     letter-spacing: -0.5px;
 }
 
+/* CARDS / TABLES */
 .admin-card {
     background: #fff;
     border-radius: 16px;
@@ -175,6 +186,10 @@ body {
     padding: 1.5rem;
     margin-bottom: 1.5rem;
 }
+
+/* Custom overrides for Bootstrap components in Admin */
+.badge { font-weight: 600; padding: 0.4em 0.8em; border-radius: 6px; }
+.table { --bs-table-hover-bg: #f8fafc; }
 .table thead th { 
     background: #f8fafc; 
     font-size: 0.75rem; 
@@ -185,3 +200,52 @@ body {
     padding: 1rem;
 }
 .table td { padding: 1rem; vertical-align: middle; }
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-w: 0px;
+    }
+    .admin-sidebar {
+        left: -280px;
+        width: 280px;
+    }
+    .admin-sidebar.show {
+        left: 0;
+    }
+    .admin-main {
+        margin-left: 0;
+        width: 100%;
+    }
+    .admin-header {
+        padding: 0 1rem;
+    }
+    .admin-content {
+        padding: 1.5rem;
+    }
+    .mobile-toggle { display: block; }
+}
+
+@media (max-width: 768px) {
+    .header-link, .user-menu span { display: none; }
+    .page-title { font-size: 1.4rem; }
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1040;
+}
+.sidebar-overlay.show { display: block; }
+
+.mobile-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #475569;
+    padding: 0.5rem;
+    margin-right: 1rem;
+}

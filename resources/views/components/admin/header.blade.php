@@ -1,9 +1,13 @@
-
 <header class="admin-header">
-    <div class="header-title">
-        <span style="font-weight: 600; font-size: 1.1rem;">
-            @yield('header_title', 'Dashboard')
-        </span>
+    <div class="d-flex align-items-center">
+        <button class="mobile-toggle" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="header-title">
+            <span style="font-weight: 600; font-size: 1.1rem;">
+                @yield('header_title', 'Dashboard')
+            </span>
+        </div>
     </div>
     <div class="header-actions">
         <a href="{{ url('/') }}" target="_blank" class="header-link">View Site &nearr;</a>

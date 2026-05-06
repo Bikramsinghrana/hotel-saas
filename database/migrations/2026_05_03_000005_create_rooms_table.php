@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->date('check_in')->nullable();
             $table->date('check_out')->nullable();
             $table->integer('day')->nullable();
-            $table->unsignedBigInteger('media_id')->nullable();
+            // $table->foreignId('media_id')->nullable()->constrained('media')->nullOnDelete(); // or cascadeOnDelete()
             $table->json('facilities')->nullable();
             $table->enum('status', ['pending', 'draft', 'active', 'inactive'])->default('draft');
             $table->softDeletes();

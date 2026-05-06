@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\HotelWizardRequest;
+use App\Http\Requests\Admin\SaveHotelRequest;
 use App\Services\HotelWizardService;
 use App\Repositories\HotelRepository;
 use Illuminate\Http\Request;
@@ -22,10 +22,17 @@ class HotelWizardController extends Controller
 
     public function create()
     {
-        return view('hotel.admin.management.wizard', [
-            'hotel' => null,
-            'step' => 1
+        $hotel = \App\Models\Hotel::create([
+            'tenant_id' => tenant()->id,
+            'name' => 'New Hotel ' . rand(100, 999),
+            'status' => \App\Enums\HotelStatusEnum::PENDING,
+            'address' => [],
+            'facilities' => [],
+            'extra_info' => [],
+            'rating' => 1
         ]);
+
+        return redirect()->route('admin.hotels.wizard.edit', ['id' => $hotel->id]);
     }
 
     public function edit($id)
@@ -39,7 +46,7 @@ class HotelWizardController extends Controller
         ]);
     }
 
-    public function store(HotelWizardRequest $request)
+    public function store(SaveHotelRequest $request)
     {
         try {
             $step = $request->input('step');
@@ -53,13 +60,15 @@ class HotelWizardController extends Controller
                 default => throw new Exception("Invalid step"),
             };
 
+            // If last step, set status to active
+            if ($step == '5') {
+                $result->update(['status' => \App\Enums\HotelStatusEnum::ACTIVE]);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => "Step $step saved successfully!",
-                'hotel_id' => $result->id,
-                'next_url' => $step == '1' && !$hotelId 
-                    ? route('admin.hotels.wizard.edit', ['id' => $result->id, 'step' => 2]) 
-                    : null
+                'hotel_id' => $result->id
             ]);
         } catch (Exception $e) {
             return response()->json([

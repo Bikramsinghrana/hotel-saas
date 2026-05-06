@@ -5,7 +5,15 @@
 @section('content')
 <div class="container-fluid p-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="page-title mb-0">Manage Hotels</h1>
+        <div>
+            <h1 class="page-title mb-0">Manage Hotels</h1>
+            <button id="bulkDeleteBtn" 
+                    class="btn btn-outline-danger btn-sm mt-2" 
+                    style="display: none;" 
+                    data-url="{{ route('admin.hotels.bulk-delete') }}">
+                <i class="fas fa-trash me-1"></i> Delete Selected
+            </button>
+        </div>
         <a href="{{ route('admin.hotels.wizard.create') }}" class="btn btn-primary d-flex align-items-center gap-2">
             <i class="fas fa-plus"></i>
             <span>Add New Hotel</span>
@@ -17,17 +25,23 @@
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="selectAll" class="form-check-input">
+                        </th>
                         <th style="width: 80px;">Image</th>
                         <th>Hotel Details</th>
                         <th>Status</th>
                         <th>Pricing</th>
-                        <th>Rating</th>
+                        <th>Rooms</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($hotels as $hotel)
                         <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input row-checkbox" value="{{ $hotel->id }}">
+                            </td>
                             <td>
                                 @php
                                     $thumb = $hotel->media->where('type', 'thumbnail')->first() ?? $hotel->media->first();
@@ -44,23 +58,27 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="badge {{ $hotel->status->value == 'active' ? 'bg-success' : ($hotel->status->value == 'draft' ? 'bg-warning' : 'bg-secondary') }}">
-                                    {{ ucfirst($hotel->status->value) }}
-                                </span>
+                                <div class="dropdown">
+                                    <span class="badge cursor-pointer {{ $hotel->status->value == 'active' ? 'bg-success' : ($hotel->status->value == 'draft' ? 'bg-warning' : ($hotel->status->value == 'pending' ? 'bg-info' : 'bg-secondary')) }}" 
+                                          data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                                        {{ ucfirst($hotel->status->value) }}
+                                    </span>
+                                    <ul class="dropdown-menu shadow-sm border-0">
+                                        <li><a class="dropdown-item small" href="javascript:void(0)" onclick="changeStatus({{ $hotel->id }}, 'active')">Active</a></li>
+                                        <li><a class="dropdown-item small" href="javascript:void(0)" onclick="changeStatus({{ $hotel->id }}, 'inactive')">Inactive</a></li>
+                                        <li><a class="dropdown-item small" href="javascript:void(0)" onclick="changeStatus({{ $hotel->id }}, 'pending')">Pending</a></li>
+                                        <li><a class="dropdown-item small" href="javascript:void(0)" onclick="changeStatus({{ $hotel->id }}, 'draft')">Draft</a></li>
+                                    </ul>
+                                </div>
                             </td>
                             <td>
                                 <div class="fw-bold text-primary">${{ number_format($hotel->base_price, 2) }}</div>
                                 <div class="text-muted small">per night</div>
                             </td>
                             <td>
-                                <div class="text-warning">
-                                    @for($i = 0; $i < $hotel->rating; $i++)
-                                        <i class="fas fa-star"></i>
-                                    @endfor
-                                    @for($i = $hotel->rating; $i < 5; $i++)
-                                        <i class="far fa-star"></i>
-                                    @endfor
-                                </div>
+                                <a href="{{ route('admin.rooms.index', ['hotel_id' => $hotel->id]) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    <i class="fas fa-bed me-1"></i> {{ $hotel->rooms_count ?? $hotel->rooms()->count() }} Rooms
+                                </a>
                             </td>
                             <td class="text-end">
                                 <div class="dropdown">
@@ -74,8 +92,8 @@
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item" href="#">
-                                                <i class="fas fa-eye me-2 text-info"></i> View Details
+                                            <a class="dropdown-item" href="{{ route('admin.rooms.index', ['hotel_id' => $hotel->id]) }}">
+                                                <i class="fas fa-door-open me-2 text-success"></i> Manage Rooms
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider"></li>
@@ -94,9 +112,8 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
-                                <i class="fas fa-hotel fa-3x mb-3 opacity-25"></i>
-                                <p class="mb-0">No hotels found. Start by adding your first hotel!</p>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                No hotels found.
                             </td>
                         </tr>
                     @endforelse
@@ -110,3 +127,7 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+    <script src="{{ asset('js/hotel/admin/hotel-management.js') }}"></script>
+@endpush

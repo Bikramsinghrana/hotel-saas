@@ -24,4 +24,21 @@ class HotelController extends Controller
         $hotel->delete();
         return back()->with('success', 'Hotel deleted successfully.');
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids');
+        if ($ids) {
+            Hotel::whereIn('id', $ids)->delete();
+            return response()->json(['success' => true, 'message' => 'Selected hotels deleted successfully!']);
+        }
+        return response()->json(['success' => false, 'message' => 'No hotels selected.'], 400);
+    }
+
+    public function updateStatus(Request $request, Hotel $hotel)
+    {
+        $request->validate(['status' => 'required|string']);
+        $hotel->update(['status' => $request->status]);
+        return response()->json(['success' => true, 'message' => 'Hotel status updated to ' . $request->status]);
+    }
 }

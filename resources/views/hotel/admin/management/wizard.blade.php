@@ -12,7 +12,7 @@
 @endpush
 
 @section('content')
-<div class="container-fluid p-0" x-data="hotelWizard({{ json_encode($hotel) }}, {{ $step }})" x-cloak>
+<div class="container-fluid p-0" x-data="hotelWizard(@json($hotel), {{ $step }})" x-cloak>
     <div class="mb-4">
         <h1 class="page-title">{{ $hotel ? 'Edit Hotel: ' . $hotel->name : 'Create New Hotel' }}</h1>
     </div>
@@ -341,28 +341,30 @@
 @push('scripts')
 <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
 <script>
+    Dropzone.autoDiscover = false;
+
     function hotelWizard(hotel, step) {
         return {
             currentStep: step,
             hotelId: hotel ? hotel.id : null,
             loading: false,
             formData: {
-                name: hotel ? hotel.name : '',
-                description: hotel ? hotel.description : '',
-                rating: hotel ? hotel.rating : 3,
-                status: hotel ? hotel.status : 'draft',
-                address_line: hotel?.address ? hotel.address.address_line : '',
-                city: hotel?.address ? hotel.address.city : '',
-                state: hotel?.address ? hotel.address.state : '',
-                country: hotel?.address ? hotel.address.country : '',
-                pincode: hotel?.address ? hotel.address.pincode : '',
-                nearby_places: hotel?.nearby || [],
+                name: hotel?.name || '',
+                description: hotel?.description || '',
+                rating: hotel?.rating || 3,
+                status: hotel?.status || 'draft',
+                address_line: hotel?.address?.address_line || '',
+                city: hotel?.address?.city || '',
+                state: hotel?.address?.state || '',
+                country: hotel?.address?.country || '',
+                pincode: hotel?.address?.pincode || '',
+                nearby_places: Array.isArray(hotel?.nearby) ? hotel.nearby : [],
                 price_per_night: hotel?.base_price || 0,
                 discount_percentage: hotel?.discount || 0,
                 tax_percentage: hotel?.tax || 0,
-                facilities: hotel?.facilities || [],
-                cancellation_type: hotel?.policies ? hotel.policies.cancellation_type : 'free',
-                cancel_before_days: hotel?.policies ? hotel.policies.cancel_before_days : 0,
+                facilities: Array.isArray(hotel?.facilities) ? hotel.facilities : [],
+                cancellation_type: hotel?.policies?.cancellation_type || 'free',
+                cancel_before_days: hotel?.policies?.cancel_before_days || 0,
             },
             roomData: {
                 room_type: '',
@@ -371,8 +373,8 @@
                 max_children: 0,
                 price_per_day: 0,
             },
-            rooms: hotel?.rooms || [],
-            uploadedMedia: hotel?.media || [],
+            rooms: Array.isArray(hotel?.rooms) ? hotel.rooms : [],
+            uploadedMedia: Array.isArray(hotel?.media) ? hotel.media : [],
             dropzone: null,
 
             init() {
@@ -386,6 +388,9 @@
             goToStep(i) {
                 if (this.hotelId || i == 1) {
                     this.currentStep = i;
+                    if (this.currentStep == 4 && !this.dropzone) {
+                        this.$nextTick(() => this.initDropzone());
+                    }
                 } else {
                     this.showToast('Please complete Step 1 first', 'warning');
                 }
@@ -446,25 +451,24 @@
                         this.showToast(result.message);
                         if (result.hotel_id) this.hotelId = result.hotel_id;
                         
-                        if (result.next_url) {
-                            window.location.href = result.next_url;
-                        } else if (step < 5) {
+                        if (step < 5) {
                             this.currentStep++;
-                            if (this.currentStep == 4 && !this.dropzone) this.initDropzone();
+                            if (this.currentStep == 4 && !this.dropzone) {
+                                this.$nextTick(() => this.initDropzone());
+                            }
                         } else {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Success!',
-                                text: 'Hotel setup completed successfully!',
-                                confirmButtonText: 'View Hotels'
-                            }).then(() => {
-                                window.location.href = '/admin/dashboard'; // Change to actual hotel list route
-                            });
+                            // Final step completion
+                            this.showToast('Hotel activated successfully!');
+                            setTimeout(() => {
+                                window.location.href = '{{ route("admin.hotels.index") }}';
+                            }, 1500);
                         }
                     } else {
-                        this.showError(result.message || 'Validation failed');
                         if (result.errors) {
-                            console.log(result.errors);
+                            let errorMsg = Object.values(result.errors).flat().join('<br>');
+                            this.showError(errorMsg);
+                        } else {
+                            this.showError(result.message || 'Validation failed');
                         }
                     }
                 } catch (e) {

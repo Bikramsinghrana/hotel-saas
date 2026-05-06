@@ -11,12 +11,19 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\HotelMasterController;
 use App\Http\Controllers\Admin\RoomTypeController;
+use App\Http\Controllers\Admin\RoomController;
 
 // Admin Domain Specific Routes (Prefix: admin, Name: admin.)
 
 Route::resource('roles', RoleController::class);
 Route::resource('hotels', HotelController::class);
+Route::post('hotels/bulk-delete', [HotelController::class, 'bulkDelete'])->name('hotels.bulk-delete');
+Route::patch('hotels/{hotel}/status', [HotelController::class, 'updateStatus'])->name('hotels.update-status');
+
 Route::resource('room-types', RoomTypeController::class);
+Route::resource('rooms', RoomController::class);
+Route::post('rooms/bulk-delete', [RoomController::class, 'bulkDelete'])->name('rooms.bulk-delete');
+Route::patch('rooms/{room}/status', [RoomController::class, 'updateStatus'])->name('rooms.update-status');
 
 // Consolidated Master Data (Amenities, Guest Services, Room Facilities)
 Route::resource('masters', HotelMasterController::class);

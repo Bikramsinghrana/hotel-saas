@@ -9,6 +9,8 @@ return new class extends Migration {
     {
         Schema::create('media', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('room_id')->nullable()->constrained('rooms')->nullOnDelete();
+            $table->foreignId('hotel_id')->nullable()->constrained('hotels')->nullOnDelete();
             $table->morphs('mediable');
             $table->string('type')->nullable();
             $table->string('disk')->default('public');

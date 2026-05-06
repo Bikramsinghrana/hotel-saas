@@ -62,3 +62,35 @@ if (! function_exists('cacheRemember')) {
         return Cache::remember($key, $ttl, $cb);
     }
 }
+
+if (! function_exists('uploadImage')) {
+    /**
+     * @param \Illuminate\Http\UploadedFile $file
+     * @param string $folder Relative path inside base_path('uploads')
+     * @param int|null $width
+     * @param int|null $height
+     * @return string Final path relative to base_path()
+     */
+    function uploadImage($file, $folder = 'hotel', $width = null, $height = null)
+    {
+        $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+        
+        $basePath = base_path('uploads/' . $folder);
+        if (!file_exists($basePath)) {
+            mkdir($basePath, 0775, true);
+        }
+
+        $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $fullPath = $basePath . '/' . $fileName;
+
+        $image = $manager->read($file);
+
+        if ($width && $height) {
+            $image->cover($width, $height);
+        }
+
+        $image->save($fullPath);
+
+        return 'uploads/' . $folder . '/' . $fileName;
+    }
+}

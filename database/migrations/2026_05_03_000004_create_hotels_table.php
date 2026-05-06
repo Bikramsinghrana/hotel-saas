@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->decimal('discount',8,2)->default(0);
             $table->decimal('tax',8,2)->default(0);
             $table->json('facilities')->nullable();
+            $table->json('policies')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

@@ -8,10 +8,18 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GuestController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\HotelController;
+use App\Http\Controllers\Admin\HotelMasterController;
+use App\Http\Controllers\Admin\RoomTypeController;
 
 // Admin Domain Specific Routes (Prefix: admin, Name: admin.)
 
 Route::resource('roles', RoleController::class);
+Route::resource('hotels', HotelController::class);
+Route::resource('room-types', RoomTypeController::class);
+
+// Consolidated Master Data (Amenities, Guest Services, Room Facilities)
+Route::resource('masters', HotelMasterController::class);
 
 // Navigation Management
 Route::controller(NavigationController::class)->group(function () {
@@ -40,3 +48,13 @@ Route::controller(SettingController::class)->prefix('settings')->name('settings.
 
 Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('guests', [GuestController::class, 'index'])->name('guests.index');
+
+// Hotel Wizard routes
+Route::controller(App\Http\Controllers\Admin\HotelWizardController::class)->prefix('hotels/wizard')->name('hotels.wizard.')->group(function () {
+    Route::get('create', 'create')->name('create');
+    Route::get('{id}/edit', 'edit')->name('edit');
+    Route::post('store', 'store')->name('store');
+    Route::post('{id}/media', 'uploadMedia')->name('media.upload');
+    Route::delete('{id}/media/{mediaId}', 'deleteMedia')->name('media.delete');
+    Route::post('{id}/rooms', 'storeRoom')->name('rooms.store');
+});

@@ -69,16 +69,30 @@
                 </a>
             </li>
 
-            @if(!isSingleHotel())
-                @can('manage hotels')
-                <li>
-                    <a href="#">
-                        <i class="fas fa-hotel"></i>
-                        <span>Hotels</span>
-                    </a>
-                </li>
-                @endcan
-            @endif
+            @can('manage hotels')
+            <li>
+                <a href="#hotelManagementSubmenu" 
+                   data-bs-toggle="collapse" 
+                   role="button" 
+                   aria-expanded="{{ request()->routeIs('admin.hotels.*', 'admin.masters.*', 'admin.room-types.*') ? 'true' : 'false' }}" 
+                   aria-controls="hotelManagementSubmenu"
+                   class="{{ request()->routeIs('admin.hotels.*', 'admin.masters.*', 'admin.room-types.*') ? 'active' : '' }}">
+                    <i class="fas fa-hotel"></i>
+                    <span>Hotel Management</span>
+                    <i class="fas fa-chevron-down ms-auto small" style="font-size: 0.7rem;"></i>
+                </a>
+                <ul class="collapse sidebar-submenu {{ request()->routeIs('admin.hotels.*', 'admin.masters.*', 'admin.room-types.*') ? 'show' : '' }}" id="hotelManagementSubmenu">
+                    <li><a href="{{ route('admin.hotels.index') }}" class="{{ request()->routeIs('admin.hotels.index') ? 'active' : '' }}">Manage Hotels</a></li>
+                    <li><a href="{{ route('admin.room-types.index') }}" class="{{ request()->routeIs('admin.room-types.index') ? 'active' : '' }}">Accommodation Types</a></li>
+                    <li><a href="{{ route('admin.masters.index', ['type' => 'amenity']) }}" class="{{ request()->fullUrlIs(route('admin.masters.index', ['type' => 'amenity'])) ? 'active' : '' }}">Amenities</a></li>
+                    <li><a href="{{ route('admin.masters.index', ['type' => 'guest_service']) }}" class="{{ request()->fullUrlIs(route('admin.masters.index', ['type' => 'guest_service'])) ? 'active' : '' }}">Guest Services</a></li>
+                    <li><a href="{{ route('admin.masters.index', ['type' => 'room_facility']) }}" class="{{ request()->fullUrlIs(route('admin.masters.index', ['type' => 'room_facility'])) ? 'active' : '' }}">Room Facilities</a></li>
+                    <li><a href="#">Feedback & Ratings</a></li>
+                    <li><a href="#">Reservation</a></li>
+                    <li><a href="#">Refund Report</a></li>
+                </ul>
+            </li>
+            @endcan
 
             <li class="sidebar-nav-header">Management</li>
             

@@ -22,7 +22,7 @@ class HotelWizardController extends Controller
 
     public function create()
     {
-        return view('admin.hotels.wizard', [
+        return view('hotel.admin.management.wizard', [
             'hotel' => null,
             'step' => 1
         ]);
@@ -33,7 +33,7 @@ class HotelWizardController extends Controller
         $hotel = $this->repository->find($id);
         if (!$hotel) abort(404);
 
-        return view('admin.hotels.wizard', [
+        return view('hotel.admin.management.wizard', [
             'hotel' => $hotel,
             'step' => request('step', 1)
         ]);

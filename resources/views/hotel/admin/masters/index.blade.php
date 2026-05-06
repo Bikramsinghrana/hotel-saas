@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('hotel.layouts.admin')
 
 @php
     $displayTitle = ucfirst(str_replace('_', ' ', $type));

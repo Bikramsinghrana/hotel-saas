@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('hotel.layouts.admin')
 
 @section('title', $hotel ? 'Edit Hotel Wizard' : 'Create Hotel Wizard')
 

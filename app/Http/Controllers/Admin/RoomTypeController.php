@@ -11,7 +11,7 @@ class RoomTypeController extends Controller
     public function index()
     {
         $roomTypes = RoomType::where('tenant_id', tenant()->id)->latest()->paginate(10);
-        return view('admin.room_types.index', compact('roomTypes'));
+        return view('hotel.admin.room_types.index', compact('roomTypes'));
     }
 
     public function store(Request $request)

@@ -22,7 +22,7 @@ class HotelMasterController extends Controller
         $type = $request->input('type', 'amenity');
         $masters = $this->service->listByType($type);
 
-        return view('admin.masters.index', compact('masters', 'type'));
+        return view('hotel.admin.masters.index', compact('masters', 'type'));
     }
 
     public function store(HotelMasterRequest $request)

@@ -1,4 +1,4 @@
-@extends('hotel.layouts.admin')
+@extends(\App\Helpers\HotelPath::view('layouts.admin'))
 
 @section('title', 'Manage Rooms - ' . $hotel->name)
 
@@ -98,5 +98,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/hotel/admin/hotel-management.js') }}"></script>
+    <script src="{{ \App\Helpers\HotelPath::asset('js/admin/hotel-management.js') }}"></script>
 @endpush

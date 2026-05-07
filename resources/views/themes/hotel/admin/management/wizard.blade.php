@@ -1,4 +1,4 @@
-@extends('hotel.layouts.admin')
+@extends(\App\Helpers\HotelPath::view('layouts.admin'))
 
 @section('title', $hotel ? 'Edit Hotel Wizard' : 'Create Hotel Wizard')
 

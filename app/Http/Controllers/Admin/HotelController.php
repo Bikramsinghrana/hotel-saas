@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
+use App\Helpers\HotelPath;
 use Illuminate\Http\Request;
 
 class HotelController extends Controller
@@ -15,7 +16,7 @@ class HotelController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view('hotel.admin.management.index', compact('hotels'));
+        return view(HotelPath::view('admin.management.index'), compact('hotels'));
     }
 
     public function destroy(Hotel $hotel)

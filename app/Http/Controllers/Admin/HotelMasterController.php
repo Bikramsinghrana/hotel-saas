@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\HotelMasterRequest;
 use App\Models\HotelMaster;
 use App\Services\HotelMasterService;
+use App\Helpers\HotelPath;
 use Illuminate\Http\Request;
 
 class HotelMasterController extends Controller
@@ -22,7 +23,7 @@ class HotelMasterController extends Controller
         $type = $request->input('type', 'amenity');
         $masters = $this->service->listByType($type);
 
-        return view('hotel.admin.masters.index', compact('masters', 'type'));
+        return view(HotelPath::view('admin.masters.index'), compact('masters', 'type'));
     }
 
     public function store(HotelMasterRequest $request)

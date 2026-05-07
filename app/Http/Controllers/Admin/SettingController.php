@@ -58,7 +58,8 @@ class SettingController extends Controller
             }
 
             $tenant->save();
-            session(['tenant_id' => $tenant->id]);
+            // Refresh session values so theme is available immediately
+            session(['tenant_id' => $tenant->id, 'theme' => $theme->key, 'sub_theme' => null]);
 
             return response()->json([
                 'message' => '✅ Industry set to <strong>' . $theme->name . '</strong>! Now choose a layout below.',
@@ -90,8 +91,8 @@ class SettingController extends Controller
         $tenant->sub_theme_id = $subTheme->id;
         $tenant->save();
 
-        // Refresh session
-        session(['tenant_id' => $tenant->id]);
+        // Refresh session so theme/sub_theme keys are available immediately
+        session(['tenant_id' => $tenant->id, 'theme' => $subTheme->theme->key ?? null, 'sub_theme' => $subTheme->key ?? null]);
 
         return response()->json([
             'message' => '🎉 Layout <strong>' . $subTheme->name . '</strong> activated! Your dashboard is now fully unlocked.',

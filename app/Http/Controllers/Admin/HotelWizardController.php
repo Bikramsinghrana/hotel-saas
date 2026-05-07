@@ -40,7 +40,7 @@ class HotelWizardController extends Controller
         $hotel = $this->repository->find($id);
         if (!$hotel) abort(404);
 
-        return view('hotel.admin.management.wizard', [
+        return view(\App\Helpers\HotelPath::view('admin.management.wizard'), [
             'hotel' => $hotel,
             'step' => request('step', 1)
         ]);

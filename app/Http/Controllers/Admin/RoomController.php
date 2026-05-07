@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
 use App\Models\Room;
+use App\Helpers\HotelPath;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -13,13 +14,17 @@ class RoomController extends Controller
     public function index(Request $request)
     {
         $hotelId = $request->get('hotel_id');
-        $hotel = Hotel::findOrFail($hotelId);
+        $hotel = Hotel::where('id', $hotelId)->where('tenant_id', tenant()->id)->first();
         
+        if (!$hotel) {
+            return redirect()->route('admin.hotels.index')->with('error', 'Hotel not found.');
+        }
+
         $rooms = Room::where('hotel_id', $hotelId)
             ->latest()
-            ->paginate(10);
+            ->paginate(20);
 
-        return view('hotel.admin.room.index', compact('rooms', 'hotel', 'hotelId'));
+        return view(HotelPath::view('admin.room.index'), compact('rooms', 'hotel', 'hotelId'));
     }
 
     public function store(Request $request)

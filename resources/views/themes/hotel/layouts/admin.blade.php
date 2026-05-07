@@ -15,7 +15,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 
     <!-- Hotel Admin Specific CSS -->
-    <link href="{{ asset('css/hotel/admin/hotel-admin.css') }}" rel="stylesheet">
+    <link href="{{ \App\Helpers\HotelPath::asset('css/admin/hotel-admin.css') }}" rel="stylesheet">
 
     @stack('styles')
 </head>
@@ -52,7 +52,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{ asset('js/hotel/admin/hotel-admin.js') }}"></script>
+    <script src="{{ \App\Helpers\HotelPath::asset('js/admin/hotel-admin.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

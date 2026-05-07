@@ -24,7 +24,9 @@ class DashboardController extends Controller
         $hotels = Hotel::count();
         $bookings = Booking::count();
         $users = User::count();
+        // Set layout according to path (admin views use layouts.admin)
+        $layout = 'layouts.admin';
 
-        return view('admin.dashboard', compact('hotels', 'bookings', 'users'));
+        return view('admin.dashboard', compact('hotels', 'bookings', 'users', 'layout'));
     }
 }

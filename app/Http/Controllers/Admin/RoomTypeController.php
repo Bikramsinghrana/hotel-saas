@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\RoomType;
+use App\Helpers\HotelPath;
 use Illuminate\Http\Request;
 
 class RoomTypeController extends Controller
@@ -11,7 +12,7 @@ class RoomTypeController extends Controller
     public function index()
     {
         $roomTypes = RoomType::where('tenant_id', tenant()->id)->latest()->paginate(10);
-        return view('hotel.admin.room_types.index', compact('roomTypes'));
+        return view(HotelPath::view('admin.room_types.index'), compact('roomTypes'));
     }
 
     public function store(Request $request)

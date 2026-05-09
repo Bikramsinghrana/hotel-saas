@@ -9,12 +9,14 @@ return new class extends Migration {
     {
         Schema::create('media', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('room_id')->nullable()->constrained('rooms')->nullOnDelete();
-            $table->foreignId('hotel_id')->nullable()->constrained('hotels')->nullOnDelete();
+            $table->foreignId('tenant_id')->nullable()->constrained('tenants');
+            $table->foreignId('hotel_id')->nullable()->constrained('hotels')->cascadeOnDelete();
+            $table->foreignId('room_id')->nullable()->constrained('rooms')->cascadeOnDelete();
             $table->morphs('mediable');
             $table->string('type')->nullable();
             $table->string('disk')->default('public');
             $table->string('path');
+            $table->string('thumbnail')->nullable();
             $table->string('mime')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();

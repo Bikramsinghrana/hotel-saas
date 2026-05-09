@@ -12,6 +12,7 @@ class Hotel extends Model
 
     protected $fillable = [
         'tenant_id',
+        'author_id',
         'name',
         'description',
         'rating',
@@ -21,6 +22,8 @@ class Hotel extends Model
         'base_price',
         'discount',
         'tax',
+        'thumbnail_id',
+        'gallery',
         'facilities',
         'policies',
     ];
@@ -31,6 +34,7 @@ class Hotel extends Model
         'nearby' => 'array',
         'facilities' => 'array',
         'policies' => 'array',
+        'gallery' => 'array',
     ];
 
     public function tenant()

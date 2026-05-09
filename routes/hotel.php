@@ -13,7 +13,7 @@ use App\Http\Controllers\Admin\HotelMasterController;
 use App\Http\Controllers\Admin\RoomTypeController;
 use App\Http\Controllers\Admin\RoomController;
 
-// Admin Domain Specific Routes (Prefix: admin, Name: admin.)
+// Admin Domain Specific Routes, set default (Prefix: admin, Name: admin.) ++++++++++++++++++++++++++++++++++++
 
 Route::resource('roles', RoleController::class);
 Route::resource('hotels', HotelController::class);

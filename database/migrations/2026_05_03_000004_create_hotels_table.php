@@ -10,6 +10,7 @@ return new class extends Migration {
         Schema::create('hotels', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->constrained('tenants');
+            $table->foreignId('author_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->unsignedTinyInteger('rating')->default(3);
@@ -19,6 +20,8 @@ return new class extends Migration {
             $table->decimal('base_price',10,2)->default(0);
             $table->decimal('discount',8,2)->default(0);
             $table->decimal('tax',8,2)->default(0);
+            $table->unsignedBigInteger('thumbnail_id')->nullable();
+            $table->json('gallery')->nullable();
             $table->json('facilities')->nullable();
             $table->json('policies')->nullable();
             $table->softDeletes();

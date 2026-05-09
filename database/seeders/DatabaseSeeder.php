@@ -30,10 +30,11 @@ class DatabaseSeeder extends Seeder
         if (class_exists(\Database\Seeders\UserSeeder::class)) {
             $this->call(\Database\Seeders\UserSeeder::class);
         }
-
-        
-        // Seed navigation items for all tenants
+       
+        // Seed navigation items for all tenants and inser default tenant if none exist
         $this->call(NavigationSeeder::class);
+        // $this->call(InitialDemoSeeder::class); // dummy data for room types, hotels,tenant, rooms, media, etc.
+
 
         if (class_exists(\Database\Seeders\CmsSeeder::class)) {
             $this->call(\Database\Seeders\CmsSeeder::class);
@@ -42,7 +43,7 @@ class DatabaseSeeder extends Seeder
             $this->call(\Database\Seeders\UserSeeder::class);
         }
 
-        $this->call(InitialDemoSeeder::class); // dummy data for room types, hotels, rooms, media, etc.
+
         $this->call(RoomTypeSeeder::class);
     }
 }

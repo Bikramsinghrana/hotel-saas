@@ -11,6 +11,7 @@ use App\Models\Room;
 use App\Models\Media;
 use App\Models\User;
 use App\Models\UserDetail;
+use Illuminate\Support\Facades\Log;
 
 class InitialDemoSeeder extends Seeder
 {
@@ -22,9 +23,9 @@ class InitialDemoSeeder extends Seeder
         $lux = SubTheme::firstOrCreate(['theme_id' => $hotelTheme->id, 'key' => 'luxury'], ['name' => 'Luxury', 'type' => 'single_hotel']);
         $budget = SubTheme::firstOrCreate(['theme_id' => $hotelTheme->id, 'key' => 'budget'], ['name' => 'Budget', 'type' => 'multi_hotel']);
 
-        // Tenant demo
-        $tenant = Tenant::firstOrCreate(['domain' => 'demo.local'], ['name' => 'Demo Tenant', 'theme_id' => $hotelTheme->id, 'sub_theme_id' => $lux->id]);
-
+        // Tenant demo themes aand active subtheme will be set in the seeding process, but ensure they exist first
+        $tenant = Tenant::firstOrCreate(['domain' => config('app.domain')], ['name' => 'Demo Tenant', 'theme_id' => $hotelTheme->id, 'sub_theme_id' => $lux->id]);
+        Log::info('InitialDemoSeeder: Created demo tenant with ID ' . $tenant->id);
         // Users are seeded elsewhere; skip creating demo users here.
 
         // Sample hotel

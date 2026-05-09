@@ -4,18 +4,28 @@ namespace Database\Seeders;
 
 use App\Models\Navigation;
 use App\Models\Tenant;
+use App\Models\Theme;
+use App\Models\SubTheme;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use App\Enums\ModuleStatusEnum;
+use Illuminate\Support\Facades\Log;
 
 class NavigationSeeder extends Seeder
 {
     public function run(): void
     {
+       
+        $hotelTheme = Theme::firstOrCreate(['key' => 'hotel'], ['name' => 'Hotel', 'description' => 'Hotel theme']);
+        $luxury = SubTheme::firstOrCreate(['theme_id' => $hotelTheme->id, 'key' => 'luxury'], ['name' => 'Luxury', 'type' => 'single_hotel']);
+        $budget = SubTheme::firstOrCreate(['theme_id' => $hotelTheme->id, 'key' => 'budget'], ['name' => 'Budget', 'type' => 'multi_hotel']);
+
         $tenants = Tenant::all();
+        Log::info('NavigationSeeder: Found ' . $tenants->count() . ' tenants to seeder navigation');
 
         if ($tenants->isEmpty()) {
-            $tenants = [Tenant::create(['name' => 'Default Hotel', 'domain' => 'localhost'])];
+            //If needs insert default theme_id' => $hotelTheme->id, 'sub_theme_id' => $luxury->id
+            $tenants = [Tenant::create(['name' => 'Default Hotel', 'domain' => config('app.domain'),'sub_theme_id' => $luxury->id])];
         }
 
         $defaultNavigations = [

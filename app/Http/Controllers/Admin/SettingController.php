@@ -29,45 +29,58 @@ class SettingController extends Controller
         $theme  = Theme::find($request->theme_id);
         $tenant = tenant();
 
-        // ── Debug-friendly null guard ─────────────────────────────────────────
+        // Debug-friendly null guard
         if (!$tenant) {
-            // Try one more time directly from the authenticated user
+
             $user = auth()->user();
+
             if ($user && $user->tenant_id) {
+
                 $tenant = \App\Models\Tenant::find($user->tenant_id);
-                session(['tenant_id' => $user->tenant_id]);
+
+                session([
+                    'tenant_id' => $user->tenant_id
+                ]);
             }
         }
 
         if (!$tenant) {
+
             return response()->json([
-                'message' => 'No active tenant found. Your user account may not be linked to a tenant. Please contact support.',
+                'message' => 'No active tenant found. Your user account may not be linked to a tenant.',
             ], 400);
         }
-        // ─────────────────────────────────────────────────────────────────────
 
         try {
+
+            // Set Main Theme
             $tenant->theme_id = $theme->id;
 
-            // Reset sub_theme if it doesn't belong to this main theme
-            if ($tenant->sub_theme_id) {
-                $currentSub = SubTheme::find($tenant->sub_theme_id);
-                if (!$currentSub || $currentSub->theme_id != $theme->id) {
-                    $tenant->sub_theme_id = null;
-                }
-            }
+            // Get First Sub Theme From Selected Theme
+            $subTheme = SubTheme::where('theme_id', $theme->id)->first();
 
+            // Save Sub Theme ID In Tenant Table
+            $tenant->sub_theme_id = $subTheme?->id;
             $tenant->save();
-            // Refresh session values so theme is available immediately
-            session(['tenant_id' => $tenant->id, 'theme' => $theme->key, 'sub_theme' => null]);
 
-            return response()->json([
-                'message' => '✅ Industry set to <strong>' . $theme->name . '</strong>! Now choose a layout below.',
-                'reload'  => true,
+            // Refresh Session
+            session([
+                'tenant_id' => $tenant->id,
+                'theme' => $theme->key,
+                'sub_theme' => $subTheme?->key,
             ]);
 
+            return response()->json([
+                'message' => '✅ Industry set to <strong>' . $theme->name . '</strong> and default layout activated!',
+                'reload'  => true,
+            ]);
         } catch (\Throwable $e) {
-            \Log::error('activateMainTheme failed', ['error' => $e->getMessage(), 'tenant' => $tenant->id]);
+
+            \Log::error('activateMainTheme failed', [
+                'error' => $e->getMessage(),
+                'tenant' => $tenant->id
+            ]);
+
             return response()->json([
                 'message' => 'Could not save the theme. Error: ' . $e->getMessage(),
             ], 500);

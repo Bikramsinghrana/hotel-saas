@@ -13,12 +13,12 @@ class ThemeSeeder extends Seeder
         // Primary Theme
         $hotelTheme = Theme::firstOrCreate(
             ['key' => 'hotel'],
-            ['name' => 'Hotel', 'description' => 'Standard Hotel SaaS Theme']
+            ['name' => 'Hotel','status' => 'active', 'description' => 'Standard Hotel SaaS Theme']
         );
 
         $restaurantTheme = Theme::firstOrCreate(
             ['key' => 'restaurant'],
-            ['name' => 'Restaurant', 'description' => 'Restaurant & Cafe Theme']
+            ['name' => 'Restaurant', 'status' => 'inactive', 'description' => 'Restaurant & Cafe Theme']
         );
 
         // Hotel Sub Themes
@@ -58,7 +58,7 @@ class ThemeSeeder extends Seeder
                 ['theme_id' => $st['theme_id'], 'key' => $st['key']],
                 [
                     'name' => $st['name'],
-                    'type' => $st['type'],
+                    'type' => $st['type'], 
                     'description' => $st['description']
                 ]
             );

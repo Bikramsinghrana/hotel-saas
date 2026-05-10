@@ -50,7 +50,7 @@ class NavigationSeeder extends Seeder
             [
                 'title' => 'Rooms & Suites',
                 'slug' => 'rooms',
-                'url' => '/rooms',
+                'url' => '/rooms/index',
                 'description' => 'Browse our luxurious room options.',
                 'status' => ModuleStatusEnum::PUBLISHED,
                 'order' => 3,

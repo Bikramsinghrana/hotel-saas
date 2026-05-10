@@ -17,13 +17,13 @@ return new class extends Migration
             $table->unsignedBigInteger('post_id')->nullable()->index();
             $table->unsignedBigInteger('hotel_id')->nullable()->index();
             $table->bigInteger('total_room')->nullable();
+            $table->integer('booked')->default(0);
             $table->integer('adult_number')->nullable();
             $table->integer('child_number')->nullable();
             $table->date('check_in')->nullable();
             $table->date('check_out')->nullable();
             $table->string('number')->nullable();
             $table->decimal('price', 10, 2)->nullable();
-            $table->integer('booked')->default(0);
             $table->string('status')->nullable();
             $table->tinyInteger('is_base')->default(0);
             $table->timestamps();

@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->foreignId('tenant_id')->constrained('tenants');
             $table->foreignId('author_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->string('name');
+            $table->string('hotel_slug')->nullable()->index();
             $table->text('description')->nullable();
             $table->unsignedTinyInteger('rating')->default(3);
             $table->enum('status', ['pending', 'draft', 'active', 'inactive'])->default('draft');

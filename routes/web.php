@@ -10,6 +10,9 @@ use App\Http\Controllers\Customer\DashboardController as CustomerDashboardContro
 use App\Http\Controllers\User\ProfileController;
 
 Route::get('/', [PageController::class, 'index']);
+Route::get('/rooms/index', [App\Http\Controllers\RoomController::class, 'index'])->name('rooms.index');
+Route::get('/rooms/{id}/checkout', [App\Http\Controllers\RoomController::class, 'checkout'])->name('rooms.checkout');
+Route::post('/rooms/{id}/book', [App\Http\Controllers\RoomController::class, 'book'])->name('rooms.book');
 
 // Authentication routes
 Route::controller(LoginController::class)->group(function () {
@@ -45,3 +48,5 @@ Route::middleware('auth')->group(function () {
         Route::post('/', 'update')->name('update');
     });
 });
+
+

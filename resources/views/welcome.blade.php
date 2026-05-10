@@ -209,26 +209,8 @@
     </div>
 </section>
 
-{{-- ── SEARCH BAR ── --}}
-<div class="search-wrap" id="book">
-    <div class="search-card">
-        <div class="search-field">
-            <label>📍 Destination</label>
-            <input type="text" placeholder="Where are you going?">
-        </div>
-        <div class="search-field">
-            <label>📅 Check-in</label>
-            <input type="date">
-        </div>
-        <div class="search-field">
-            <label>📅 Check-out</label>
-            <input type="date">
-        </div>
-        <div>
-            <button class="btn-search" style="width:100%;">Search Hotels</button>
-        </div>
-    </div>
-</div>
+{{-- ── FILTER / SEARCH BAR ── --}}
+<x-room-filter />
 
 {{-- ── HOTEL CARDS ── --}}
 <div class="section" id="rooms">

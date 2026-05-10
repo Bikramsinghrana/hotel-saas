@@ -17,11 +17,13 @@ class Room extends Model
         'author_id',
 
         'room_type',
+        'room_slug',
         'post_title',
         'post_content',
         'thumbnail_id',
         'gallery',
         'facilities',
+        'extra_services',
 
         'total_rooms',
         'number_of_bed',
@@ -33,6 +35,7 @@ class Room extends Model
         'member_price',
         'price_per_day',
         'discount',
+        'coupon',
         'tax',
 
         'check_in',
@@ -41,11 +44,13 @@ class Room extends Model
 
         'is_base',
         'status',
+        'coupon',
     ];
 
     protected $casts = [
         'gallery'      => 'array',
         'facilities'   => 'array',
+        'extra_services' => 'array',
         'check_in'     => 'date',
         'check_out'    => 'date',
         'is_base'      => 'boolean',
@@ -76,6 +81,10 @@ class Room extends Model
     {
         return $this->belongsTo(RoomType::class);
     }
+    public function media()
+    {
+        return $this->hasMany(Media::class);
+    }
 
     public function thumbnail()
     {
@@ -85,6 +94,16 @@ class Room extends Model
     public function author()
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(RoomOrder::class, 'room_id');
+    }
+
+    public function availabilities()
+    {
+        return $this->hasMany(RoomAvailability::class, 'post_id');
     }
 
     /*

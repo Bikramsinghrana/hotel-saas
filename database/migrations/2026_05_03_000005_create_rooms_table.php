@@ -17,12 +17,14 @@ return new class extends Migration {
             $table->foreignId('room_type_id')->nullable()->constrained('room_types')->nullOnDelete();
             $table->foreignId('author_id')->nullable()->constrained('users')->cascadeOnDelete();
 
-            $table->string('room_type');
+            // $table->string('room_type')->nullable();
+            $table->string('room_slug')->nullable()->index();
             $table->string('post_title')->nullable();
             $table->longText('post_content')->nullable();
             $table->unsignedBigInteger('thumbnail_id')->nullable();
             $table->json('gallery')->nullable();
             $table->json('facilities')->nullable();
+            $table->json('extra_services')->nullable();
 
             $table->integer('total_rooms')->default(1);
             $table->integer('number_of_bed')->default(1);
@@ -35,6 +37,7 @@ return new class extends Migration {
             $table->decimal('member_price', 10, 2)->default(0);
             $table->decimal('price_per_day', 10, 2)->default(0);
             $table->decimal('discount', 8, 2)->default(0);
+            $table->string('coupon')->nullable();
             $table->decimal('tax', 8, 2)->default(0);
 
             $table->date('check_in')->nullable();

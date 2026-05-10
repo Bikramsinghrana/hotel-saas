@@ -20,14 +20,10 @@
                         data-url="{{ route('admin.rooms.bulk-delete') }}">
                     <i class="fas fa-trash me-1"></i> Delete Selected
                 </button>
-                <form action="{{ route('admin.rooms.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="hotel_id" value="{{ $hotel->id }}">
-                    <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
-                        <i class="fas fa-plus"></i>
-                        <span>Add Random Room</span>
-                    </button>
-                </form>
+                <a href="{{ route('admin.rooms.wizard.create', ['hotel_id' => $hotel->id]) }}" class="btn btn-primary d-flex align-items-center gap-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Add New Room</span>
+                </a>
             </div>
         </div>
     </div>
@@ -40,9 +36,11 @@
                         <th style="width: 40px;">
                             <input type="checkbox" id="selectAll" class="form-check-input">
                         </th>
-                        <th>Room Name/Type</th>
-                        <th>Status</th>
+                        <th>Slug / Name</th>
+                        <th>Rooms</th>
                         <th>Price</th>
+                        <th>Member Price</th>
+                        <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -53,7 +51,16 @@
                                 <input type="checkbox" class="form-check-input row-checkbox" value="{{ $room->id }}">
                             </td>
                             <td>
-                                <div class="fw-bold text-dark">{{ $room->room_type }}</div>
+                                <div class="fw-bold text-dark">{{ $room->room_slug ?? $room->room_type }}</div>
+                            </td>
+                            <td>
+                                <div>{{ $room->total_rooms }}</div>
+                            </td>
+                            <td>
+                                <div class="text-primary fw-bold">${{ number_format($room->price_per_day, 2) }}</div>
+                            </td>
+                            <td>
+                                <div class="text-muted">${{ number_format($room->member_price, 2) }}</div>
                             </td>
                             <td>
                                 <div class="dropdown">
@@ -67,17 +74,27 @@
                                     </ul>
                                 </div>
                             </td>
-                            <td>
-                                <div class="text-primary fw-bold">${{ number_format($room->price_per_day, 2) }}</div>
-                            </td>
                             <td class="text-end">
-                                <form action="{{ route('admin.rooms.destroy', $room) }}" method="POST" onsubmit="return confirm('Are you sure?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-light btn-sm border text-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <div class="d-flex justify-content-end gap-1">
+                                    <!-- View Action (could point to frontend room view if it exists, or just #) -->
+                                    <a href="#" class="btn btn-light btn-sm border text-info" title="View Room">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    <!-- Edit Action -->
+                                    <a href="{{ route('admin.rooms.wizard.edit', $room->id) }}" class="btn btn-light btn-sm border text-primary" title="Edit Room">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </a>
+
+                                    <!-- Delete Action -->
+                                    <form action="{{ route('admin.rooms.destroy', $room) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this room?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-light btn-sm border text-danger" title="Delete Room">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

@@ -14,6 +14,7 @@ class Hotel extends Model
         'tenant_id',
         'author_id',
         'name',
+        'hotel_slug',
         'description',
         'rating',
         'status',

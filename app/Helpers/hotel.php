@@ -19,7 +19,9 @@ class HotelPath
      */
     public static function view($path)
     {
-        return self::VIEW . $path;
+        $return = self::VIEW . $path;
+        // dd($return);
+        return $return;
     }
 
     /**

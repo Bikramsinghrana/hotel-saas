@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\HotelMasterRequest;
 use App\Models\HotelMaster;
 use App\Services\HotelMasterService;
-use App\Helpers\HotelPath;
+use App\Helpers\hotel;
 use Illuminate\Http\Request;
 
 class HotelMasterController extends Controller

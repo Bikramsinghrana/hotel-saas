@@ -17,6 +17,9 @@
     <!-- Hotel Admin Specific CSS -->
     <link href="{{ \App\Helpers\HotelPath::asset('css/admin/hotel-admin.css') }}" rel="stylesheet">
 
+    <!-- Alpine.js (required for some admin components) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     @stack('styles')
 </head>
 <body>
@@ -52,7 +55,8 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{ \App\Helpers\HotelPath::asset('js/admin/hotel-admin.js') }}"></script>
+    {{-- <script src="{{ \App\Helpers\HotelPath::asset('js/admin/hotel-admin.js') }}"></script> --}}
+    <script src="{{ asset('themes/hotel/js/admin/hotel-admin.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

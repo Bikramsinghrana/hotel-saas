@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GuestController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\HotelWizardController;
 use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\HotelMasterController;
 use App\Http\Controllers\Admin\RoomTypeController;
@@ -57,7 +58,7 @@ Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard'
 Route::get('guests', [GuestController::class, 'index'])->name('guests.index');
 
 // Hotel Wizard routes
-Route::controller(App\Http\Controllers\Admin\HotelWizardController::class)->prefix('hotels/wizard')->name('hotels.wizard.')->group(function () {
+Route::controller(HotelWizardController::class)->prefix('hotels/wizard')->name('hotels.wizard.')->group(function () {
     Route::get('create', 'create')->name('create');
     Route::get('{id}/edit', 'edit')->name('edit');
     Route::post('store', 'store')->name('store');

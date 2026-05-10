@@ -1,4 +1,5 @@
-@extends(\App\Helpers\HotelPath::view('layouts.admin'))
+@extends('themes.hotel.layouts.admin')
+{{-- @extends(\App\Helpers\HotelPath::view('layouts.admin')) --}}
 
 @section('title', $hotel ? 'Edit Hotel Wizard' : 'Create Hotel Wizard')
 
@@ -12,7 +13,7 @@
 @endpush
 
 @section('content')
-<div class="container-fluid p-0" x-data="hotelWizard(@json($hotel), {{ $step }})" x-cloak>
+<div class="container-fluid p-0" x-data='hotelWizard(@json($hotel ?? []), @json($step ?? 1))' x-cloak>
     <div class="mb-4">
         <h1 class="page-title">{{ $hotel ? 'Edit Hotel: ' . $hotel->name : 'Create New Hotel' }}</h1>
     </div>

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SaveHotelRequest;
 use App\Services\HotelWizardService;
 use App\Repositories\HotelRepository;
+use App\Enums\HotelStatusEnum;
+use App\Helpers\HotelPath;
 use Illuminate\Http\Request;
 use Exception;
 
@@ -25,43 +27,45 @@ class HotelWizardController extends Controller
         $hotel = \App\Models\Hotel::create([
             'tenant_id' => tenant()->id,
             'name' => 'New Hotel ' . rand(100, 999),
-            'status' => \App\Enums\HotelStatusEnum::PENDING,
+            'status' => HotelStatusEnum::PENDING,
             'address' => [],
             'facilities' => [],
             'extra_info' => [],
             'rating' => 1
         ]);
+        // dd($hotel);
 
         return redirect()->route('admin.hotels.wizard.edit', ['id' => $hotel->id]);
     }
 
     public function edit($id)
-    {
+    {  
         $hotel = $this->repository->find($id);
         if (!$hotel) abort(404);
 
-        return view(\App\Helpers\HotelPath::view('admin.management.wizard'), [
+        $response =  view(HotelPath::view('admin.management.wizard'), [
             'hotel' => $hotel,
             'step' => request('step', 1)
         ]);
+        // dd($response);
+        return $response;
     }
 
     public function store(SaveHotelRequest $request)
     {
         try {
-            $step = $request->input('step');
+            $step = (int) $request->input('step');
             $hotelId = $request->input('hotel_id');
 
-            $result = match($step) {
-                '1' => $this->service->processStep1($request->validated(), $hotelId),
-                '2' => $this->service->processStep2($hotelId, $request->only(['address_line', 'city', 'state', 'country', 'pincode']), $request->input('nearby_places', [])),
-                '3' => $this->service->processStep3($hotelId, $request->only(['price_per_night', 'discount_percentage', 'tax_percentage']), $request->input('facilities', [])),
-                '5' => $this->service->processStep5($hotelId, $request->only(['cancellation_type', 'cancel_before_days'])),
-                default => throw new Exception("Invalid step"),
+            $result = match ($step) {
+                1 => $this->service->processStep1($request->validated(), $hotelId),
+                2 => $this->service->processStep2($hotelId, $request->only(['address_line', 'city', 'state', 'country', 'pincode']), $request->input('nearby_places', [])),
+                3 => $this->service->processStep3($hotelId, $request->only(['price_per_night', 'discount_percentage', 'tax_percentage']), $request->input('facilities', [])),
+                5 => $this->service->processStep5($hotelId, $request->only(['cancellation_type', 'cancel_before_days'])),
+                default => throw new \Exception("Invalid step"),
             };
 
-            // If last step, set status to active
-            if ($step == '5') {
+            if ($step === 5) {
                 $result->update(['status' => \App\Enums\HotelStatusEnum::ACTIVE]);
             }
 
@@ -70,14 +74,13 @@ class HotelWizardController extends Controller
                 'message' => "Step $step saved successfully!",
                 'hotel_id' => $result->id
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
             ], 422);
         }
     }
-
     public function uploadMedia(Request $request, $id)
     {
         try {

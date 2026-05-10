@@ -29,26 +29,75 @@ class TermController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'term' => $term,
-            'message' => 'Term created successfully'
-        ]);
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'term' => $term,
+                'message' => 'Term created successfully'
+            ]);
+        }
+
+        return back()->with('success', 'Term created successfully');
     }
 
-    public function index($type)
+    public function index(Request $request, $type = null)
     {
-        $terms = Term::where('type', $type)
+        $type = $type ?? $request->get('type');
+        
+        $query = Term::where('type', $type)
             ->where(function($query) {
                 if (tenant()) {
                     $query->where('tenant_id', tenant()->id);
                 }
             })
-            ->get();
+            ->latest();
 
-        return response()->json([
-            'success' => true,
-            'terms' => $terms
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'terms' => $query->get()
+            ]);
+        }
+
+        $terms = $query->paginate(15);
+        return view('themes.hotel.admin.terms.index', compact('terms', 'type'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $term = Term::findOrFail($id);
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'price' => 'nullable|numeric',
+            'price_type' => 'nullable|string|max:10',
+            'description' => 'nullable|string',
         ]);
+
+        $term->update($validated);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'term' => $term,
+                'message' => 'Term updated successfully'
+            ]);
+        }
+
+        return back()->with('success', 'Term updated successfully');
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $term = Term::findOrFail($id);
+        $term->delete();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Term deleted successfully'
+            ]);
+        }
+
+        return back()->with('success', 'Term deleted successfully');
     }
 }

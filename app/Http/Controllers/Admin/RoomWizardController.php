@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Models\RoomType;
 use App\Models\Term;
 use App\Enums\TermTypeEnum;
+use App\Http\Requests\Admin\RoomRequest;
 use App\Services\RoomWizardService;
 use App\Helpers\HotelPath;
 use Illuminate\Http\Request;
@@ -57,7 +58,7 @@ class RoomWizardController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(RoomRequest $request)
     {
         try {
             $step = (int) $request->input('step');
@@ -67,39 +68,20 @@ class RoomWizardController extends Controller
             $room = Room::findOrFail($roomId);
 
             if ($step == 1) {
-                $room->update($request->only([
-                    'post_title', 
-                    'room_slug', 
-                    'room_type_id', 
-                    'status', 
-                    'post_content'
-                ]));
+                $room->update($request->validated());
             } elseif ($step == 2) {
-                $room->update($request->only([
-                    'total_rooms', 
-                    'day', 
-                    'max_adults', 
-                    'max_children', 
-                    'base_price', 
-                    'member_price',
-                    'price_per_day',
-                    'discount',
-                    'tax',
-                    'check_in',
-                    'check_out',
-                    'coupon'
-                ]));
+                $room->update($request->validated());
 
                 // Generate daily availability entries
                 $roomService = new \App\Services\RoomService();
                 $roomService->generateDailyAvailabilities($room);
             } elseif ($step == 3) {
-                $room->update($request->only([
-                    'facilities', 
-                    'extra_services'
-                ]));
+                $room->update($request->validated());
             } elseif ($step == 4) { // Final review step
-                $room->update(['status' => 'active']);
+                $room->update([
+                    'accept_terms' => true,
+                    'status' => 'active'
+                ]);
             }
 
             return response()->json([

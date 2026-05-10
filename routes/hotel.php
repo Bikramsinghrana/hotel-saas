@@ -10,7 +10,6 @@ use App\Http\Controllers\Admin\GuestController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\HotelWizardController;
 use App\Http\Controllers\Admin\HotelController;
-use App\Http\Controllers\Admin\HotelMasterController;
 use App\Http\Controllers\Admin\RoomTypeController;
 use App\Http\Controllers\Admin\RoomController;
 
@@ -20,10 +19,6 @@ Route::resource('roles', RoleController::class);
 Route::resource('hotels', HotelController::class);
 Route::post('hotels/bulk-delete', [HotelController::class, 'bulkDelete'])->name('hotels.bulk-delete');
 Route::patch('hotels/{hotel}/status', [HotelController::class, 'updateStatus'])->name('hotels.update-status');
-
-
-// Consolidated Master Data (Amenities, Guest Services, Room Facilities)
-Route::resource('masters', HotelMasterController::class);
 
 // Navigation Management
 Route::controller(NavigationController::class)->group(function () {
@@ -76,9 +71,11 @@ Route::controller(App\Http\Controllers\Admin\RoomWizardController::class)->prefi
     Route::delete('{id}/media/{mediaId}', 'deleteMedia')->name('media.delete');
 });
 
-// Term management
+// Term management (Consolidated Master Data)
 Route::controller(App\Http\Controllers\Admin\TermController::class)->prefix('terms')->name('terms.')->group(function () {
     Route::post('/', 'store')->name('store');
     Route::get('/{type}', 'index')->name('index');
+    Route::put('/{id}', 'update')->name('update');
+    Route::delete('/{id}', 'destroy')->name('destroy');
 });
 

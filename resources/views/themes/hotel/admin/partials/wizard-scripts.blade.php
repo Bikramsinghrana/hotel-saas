@@ -214,6 +214,7 @@
                 check_in: room?.check_in ? new Date(room.check_in).toISOString().split('T')[0] : '',
                 check_out: room?.check_out ? new Date(room.check_out).toISOString().split('T')[0] : '',
                 coupon: room?.coupon || '',
+                accept_terms: room?.accept_terms || false,
 
                 facilities: Array.isArray(room?.facilities) ? room.facilities : [],
                 extra_services: Array.isArray(room?.extra_services) ? room.extra_services : [],

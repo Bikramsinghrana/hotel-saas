@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\SaveHotelRequest;
+use App\Http\Requests\Admin\HotelRequest;
 use App\Services\HotelWizardService;
 use App\Repositories\HotelRepository;
 use App\Enums\HotelStatusEnum;
@@ -52,7 +52,7 @@ class HotelWizardController extends Controller
         return $response;
     }
 
-    public function store(SaveHotelRequest $request)
+    public function store(HotelRequest $request)
     {
         try {
             $step = (int) $request->input('step');

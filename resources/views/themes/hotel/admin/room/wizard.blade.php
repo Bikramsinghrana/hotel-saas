@@ -273,9 +273,18 @@
                         </div>
                     </div>
 
+                    <div class="mb-4 p-3 border rounded bg-light">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="accept_terms" x-model="formData.accept_terms" required>
+                            <label class="form-check-label fw-bold" for="accept_terms">
+                                I agree to the <a href="#" target="_blank">Terms and Conditions</a> of hotel management and confirm all details are correct.
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="mt-4 d-flex justify-content-between">
                         <button type="button" @click="currentStep = 3" class="btn btn-light px-4">Back</button>
-                        <button type="submit" class="btn btn-success px-5 py-2 fw-bold" :disabled="loading">
+                        <button type="submit" class="btn btn-success px-5 py-2 fw-bold" :disabled="loading || !formData.accept_terms">
                             <span x-show="!loading">Activate Room</span>
                             <span x-show="loading"><i class="fas fa-spinner fa-spin me-2"></i>Activating...</span>
                         </button>

@@ -45,6 +45,7 @@ return new class extends Migration {
             $table->integer('day')->nullable();
 
             $table->boolean('is_base')->default(false);
+            $table->boolean('accept_terms')->default(false);
 
             $table->enum('status', ['pending', 'draft', 'active', 'inactive'])->default('draft')->index();
 

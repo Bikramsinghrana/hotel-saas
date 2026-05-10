@@ -205,7 +205,8 @@
                         <template x-for="m in uploadedMedia" :key="m.id">
                             <div class="col-md-3">
                                 <div class="position-relative">
-                                    <img :src="'/' + m.path" class="img-fluid rounded border shadow-sm" style="height: 120px; width: 100%; object-fit: cover;">
+                                    {{-- <img src="{{ imageUrl($hotel->image) }}"> --}}
+                                    <img :src="'/storage/' + m.path" class="img-fluid rounded border shadow-sm" style="height: 120px; width: 100%; object-fit: cover;">
                                     <span class="badge bg-dark position-absolute top-0 start-0 m-1" x-text="m.type"></span>
                                     <button @click="deleteMedia(m.id)" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1">
                                         <i class="fas fa-trash"></i>

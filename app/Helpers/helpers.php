@@ -2,6 +2,7 @@
 
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 if (! function_exists('tenant')) {
     function tenant(): ?Tenant
@@ -71,17 +72,39 @@ if (! function_exists('uploadImage')) {
      * @param int|null $height
      * @return string Final path relative to base_path()
      */
+
+
+    // function uploadImage($file, $folder = 'hotel', $width = null, $height = null)
+    // {
+    //     $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+
+    //     $basePath = base_path('uploads/' . $folder);
+    //     if (!file_exists($basePath)) {
+    //         mkdir($basePath, 0775, true);
+    //     }
+
+    //     $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+    //     $fullPath = $basePath . '/' . $fileName;
+
+    //     $image = $manager->read($file);
+
+    //     if ($width && $height) {
+    //         $image->cover($width, $height);
+    //     }
+
+    //     $image->save($fullPath);
+
+    //     return 'uploads/' . $folder . '/' . $fileName;
+    // }
+
+
     function uploadImage($file, $folder = 'hotel', $width = null, $height = null)
     {
-        $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
-        
-        $basePath = base_path('uploads/' . $folder);
-        if (!file_exists($basePath)) {
-            mkdir($basePath, 0775, true);
-        }
+        $manager = new \Intervention\Image\ImageManager(
+            new \Intervention\Image\Drivers\Gd\Driver()
+        );
 
         $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $fullPath = $basePath . '/' . $fileName;
 
         $image = $manager->read($file);
 
@@ -89,8 +112,54 @@ if (! function_exists('uploadImage')) {
             $image->cover($width, $height);
         }
 
-        $image->save($fullPath);
+        // temp file
+        $tempPath = storage_path('app/temp_' . $fileName);
+        $image->save($tempPath);
 
-        return 'uploads/' . $folder . '/' . $fileName;
+        // store in public disk
+        $path = Storage::disk('public')->putFileAs(
+            'uploads/' . $folder,
+            new \Illuminate\Http\File($tempPath),
+            $fileName
+        );
+
+        unlink($tempPath);
+
+        return $path; // uploads/hotel/xxx.jpg
+    }
+    
+}
+
+
+if (!function_exists('imageUrl')) {
+
+    function imageUrl($path = null)
+    {
+        $default = asset('assets/images/dummy-image.png');
+
+        if (!$path) {
+            return $default;
+        }
+
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+
+        if (!Storage::disk('public')->exists($path)) {
+            return $default;
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+}
+
+
+if (!function_exists('deleteFile')) {
+
+    function deleteFile($path, $disk = 'public')
+    {
+        if ($path && Storage::disk($disk)->exists($path)) {
+            Storage::disk($disk)->delete($path);
+        }
     }
 }

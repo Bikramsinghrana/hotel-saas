@@ -10,6 +10,7 @@ use App\Enums\HotelStatusEnum;
 use App\Helpers\HotelPath;
 use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class HotelWizardController extends Controller
 {
@@ -82,7 +83,8 @@ class HotelWizardController extends Controller
         }
     }
     public function uploadMedia(Request $request, $id)
-    {
+    {   
+        Log::info("Received media upload request for hotel $id with data: " . json_encode($request->all()));
         try {
             $request->validate([
                 'file' => 'required|image|max:5120',
@@ -90,12 +92,13 @@ class HotelWizardController extends Controller
             ]);
 
             $media = $this->service->processStep4($id, $request->file('file'), $request->input('type'));
-
+            Log::info("Media uploaded for hotel $id: " . json_encode($media));  
             return response()->json([
                 'success' => true,
                 'media' => $media
             ]);
         } catch (Exception $e) {
+            Log::error("Error uploading media for hotel $id: " . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }

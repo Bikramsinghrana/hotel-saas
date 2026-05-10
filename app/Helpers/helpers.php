@@ -116,9 +116,17 @@ if (! function_exists('uploadImage')) {
         $tempPath = storage_path('app/temp_' . $fileName);
         $image->save($tempPath);
 
+        // folder path
+        $folderPath = 'uploads/' . $folder;
+
+        // create folder if not exists
+        if (!Storage::disk('public')->exists($folderPath)) {
+            Storage::disk('public')->makeDirectory($folderPath);
+        }
+
         // store in public disk
         $path = Storage::disk('public')->putFileAs(
-            'uploads/' . $folder,
+            $folderPath,
             new \Illuminate\Http\File($tempPath),
             $fileName
         );

@@ -16,7 +16,7 @@ class HotelController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view(HotelPath::view('admin.management.index'), compact('hotels'));
+        return view(HotelPath::view('admin.hotel.index'), compact('hotels'));
     }
 
     public function destroy(Hotel $hotel)

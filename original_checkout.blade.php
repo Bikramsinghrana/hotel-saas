@@ -40,7 +40,10 @@
                     @csrf
                     <input type="hidden" name="check_in" value="{{ $checkIn }}">
                     <input type="hidden" name="check_out" value="{{ $checkOut }}">
-                    
+                    <input type="hidden" name="adults" value="{{ $adults }}">
+                    <input type="hidden" name="children" value="{{ $children }}">
+                    <input type="hidden" name="total_rooms" value="{{ $totalRooms }}">
+
                     <div class="form-group">
                         <label>Full Name</label>
                         <input type="text" name="customer_name" class="form-control" required placeholder="John Doe">
@@ -56,11 +59,6 @@
                         <input type="tel" name="phone" class="form-control" required placeholder="+1 234 567 8900">
                     </div>
 
-                    <div class="form-group">
-                        <label>Special Requests (Optional)</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="Any special requests or notes..."></textarea>
-                    </div>
-
                     <button type="submit" class="btn-submit">Confirm Booking</button>
                 </form>
             </div>
@@ -70,7 +68,7 @@
                     <h3 class="summary-title">Booking Summary</h3>
                     
                     <div class="mb-4">
-                        <h5 class="fw-bold text-dark mb-1">{{ $room->post_title }}</h5>
+                        <h5 class="fw-bold text-dark mb-1">{{ $room->room_type }}</h5>
                         <p class="small text-muted mb-0"><i class="fas fa-map-marker-alt"></i> {{ optional($room->hotel)->name ?? 'Our Hotel' }}</p>
                     </div>
 
@@ -83,34 +81,26 @@
                         <span class="fw-bold">{{ \Carbon\Carbon::parse($checkOut)->format('d M Y') }}</span>
                     </div>
                     <div class="summary-item">
-                        <span>Rooms</span>
-                        <span class="fw-bold">{{ $calc['quantity'] }} Room(s)</span>
+                        <span>Guests</span>
+                        <span class="fw-bold">{{ $adults }} Adult(s), {{ $children }} Child(ren)</span>
                     </div>
                     <div class="summary-item">
-                        <span>Stay</span>
-                        <span class="fw-bold">{{ $calc['nights'] }} Night(s)</span>
+                        <span>Quantity</span>
+                        <span class="fw-bold">{{ $totalRooms }} Room(s)</span>
                     </div>
                     
                     <div class="summary-item mt-4 pt-3 border-top">
-                        <span>Room Subtotal</span>
-                        <span>{{ \App\Helpers\CurrencyHelper::format($calc['room_total']) }}</span>
+                        <span>Price per night</span>
+                        <span>${{ number_format($room->price_per_day, 2) }}</span>
                     </div>
-                    @if($calc['extra_total'] > 0)
-                        <div class="summary-item">
-                            <span>Extra Services</span>
-                            <span>{{ \App\Helpers\CurrencyHelper::format($calc['extra_total']) }}</span>
-                        </div>
-                    @endif
-                    @if($calc['coupon_discount'] > 0)
-                        <div class="summary-item text-success fw-bold">
-                            <span>Coupon Discount</span>
-                            <span>-{{ \App\Helpers\CurrencyHelper::format($calc['coupon_discount']) }}</span>
-                        </div>
-                    @endif
+                    <div class="summary-item">
+                        <span>Nights</span>
+                        <span>x {{ $nights }}</span>
+                    </div>
 
                     <div class="summary-total">
-                        <span>Total Amount</span>
-                        <span>{{ \App\Helpers\CurrencyHelper::format($calc['total_payable']) }}</span>
+                        <span>Total Price</span>
+                        <span>${{ number_format($totalPrice, 2) }}</span>
                     </div>
                 </div>
             </div>

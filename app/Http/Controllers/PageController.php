@@ -91,6 +91,23 @@ class PageController extends Controller
             }
         }
 
-        return view('welcome', compact('hotels', 'tenant', 'theme', 'navigations', 'useDummy'));
+        // Load active offers
+        $offers = collect();
+        if (class_exists(\App\Models\Coupon::class)) {
+            $now = now()->startOfDay();
+            $offers = \App\Models\Coupon::where('type', 'offer')
+                ->where('status', true)
+                ->where(function($q) use ($now) {
+                    $q->where('start_date', '<=', $now)->orWhereNull('start_date');
+                })
+                ->where(function($q) use ($now) {
+                    $q->where('expire_date', '>=', $now)->orWhereNull('expire_date');
+                })
+                ->where('tenant_id', $tenant ? $tenant->id : (\App\Models\Tenant::first()->id ?? 0))
+                ->latest()
+                ->get();
+        }
+
+        return view('welcome', compact('hotels', 'tenant', 'theme', 'navigations', 'useDummy', 'offers'));
     }
 }

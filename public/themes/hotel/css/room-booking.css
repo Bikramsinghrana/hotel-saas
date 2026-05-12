@@ -1,0 +1,143 @@
+/* ── ROOM BOOKING INTEGRATION STYLES ── */
+/* This file extends the original UI with booking functionality */
+
+/* 1. Layout Adjustment */
+.booking-page-wrap {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.rooms-side {
+    flex-grow: 1;
+}
+
+.booking-sidebar {
+    width: 380px;
+    position: sticky;
+    top: 6rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1200px) {
+    .booking-page-wrap {
+        flex-direction: column;
+    }
+    .booking-sidebar {
+        width: 100%;
+        position: static;
+    }
+}
+
+/* 2. Room Card Additions */
+.room-booking-controls {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.extra-services-list {
+    margin-bottom: 1.5rem;
+}
+
+.extra-service-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #475569;
+    margin-bottom: 0.4rem;
+    cursor: pointer;
+}
+
+.extra-service-item input {
+    cursor: pointer;
+}
+
+.room-qty-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.room-qty-box label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.room-qty-box select {
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+/* 3. Booking Sidebar UI (User's preferred simple line/card) */
+.booking-summary-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    padding: 1.5rem;
+}
+
+.summary-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #0f172a;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 1rem;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    color: #475569;
+}
+
+.summary-line.total {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 2px solid #f1f5f9;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #0f172a;
+}
+
+.btn-confirm-booking {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(22,163,74,0.3);
+}
+
+.btn-confirm-booking:hover {
+    background: #15803d;
+    transform: translateY(-2px);
+}
+
+/* 4. Responsive Images (Fixing "too large" images) */
+.room-img-wrap {
+    height: 220px; /* Reduced from 240px */
+}
+
+@media (max-width: 576px) {
+    .room-img-wrap {
+        height: 200px;
+    }
+}

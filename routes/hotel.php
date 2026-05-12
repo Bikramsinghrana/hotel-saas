@@ -79,3 +79,6 @@ Route::controller(App\Http\Controllers\Admin\TermController::class)->prefix('ter
     Route::delete('/{id}', 'destroy')->name('destroy');
 });
 
+// Coupon & Offer Management
+Route::resource('coupons', App\Http\Controllers\Admin\CouponController::class);
+

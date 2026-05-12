@@ -12,6 +12,17 @@ $(document).ready(function() {
         }
     });
 
+    // Common Toast function using SweetAlert2
+    window.AppCommon = {
+        showToast(message, type = 'info') {
+            // lightweight fallback toast
+            console.log('[toast]', type, message);
+            if (window.Swal) {
+                Swal.fire({ toast: true, position: 'top-end', icon: type, title: message, showConfirmButton: false, timer: 3000 });
+            }
+        }
+    };
+
     /**
      * AJAX Form Submission Handler
      * Add the class 'ajax-form' to any form you want to submit via AJAX.

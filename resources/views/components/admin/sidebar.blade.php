@@ -87,6 +87,8 @@
                     <li><a href="{{ route('admin.terms.index', ['type' => 'amenity']) }}" class="{{ request()->fullUrlIs(route('admin.terms.index', ['type' => 'amenity'])) ? 'active' : '' }}">Amenities</a></li>
                     <li><a href="{{ route('admin.terms.index', ['type' => 'extra_service']) }}" class="{{ request()->fullUrlIs(route('admin.terms.index', ['type' => 'extra_service'])) ? 'active' : '' }}">Extra Services</a></li>
                     <li><a href="{{ route('admin.terms.index', ['type' => 'facility']) }}" class="{{ request()->fullUrlIs(route('admin.terms.index', ['type' => 'facility'])) ? 'active' : '' }}">Facilities</a></li>
+                    <li><a href="{{ route('admin.coupons.index', ['type' => 'coupon']) }}" class="{{ request()->fullUrlIs(route('admin.coupons.index', ['type' => 'coupon'])) ? 'active' : '' }}">Coupons</a></li>
+                    <li><a href="{{ route('admin.coupons.index', ['type' => 'offer']) }}" class="{{ request()->fullUrlIs(route('admin.coupons.index', ['type' => 'offer'])) ? 'active' : '' }}">Exclusive Offers</a></li>
                     <li><a href="#">Feedback & Ratings</a></li>
                     <li><a href="#">Reservation</a></li>
                     <li><a href="#">Refund Report</a></li>

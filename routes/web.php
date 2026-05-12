@@ -10,9 +10,13 @@ use App\Http\Controllers\Customer\DashboardController as CustomerDashboardContro
 use App\Http\Controllers\User\ProfileController;
 
 Route::get('/', [PageController::class, 'index']);
-Route::get('/rooms/index', [App\Http\Controllers\RoomController::class, 'index'])->name('rooms.index');
-Route::get('/rooms/{id}/checkout', [App\Http\Controllers\RoomController::class, 'checkout'])->name('rooms.checkout');
-Route::post('/rooms/{id}/book', [App\Http\Controllers\RoomController::class, 'book'])->name('rooms.book');
+Route::controller(App\Http\Controllers\RoomController::class)->group(function () {
+    Route::get('/rooms/index', 'index')->name('rooms.index');
+    Route::get('/rooms/{id}/checkout', 'checkout')->name('rooms.checkout');
+    Route::post('/rooms/checkout-init', 'checkoutInit')->name('rooms.checkout.init');
+    Route::post('/rooms/{id}/book', 'book')->name('rooms.book');
+    Route::get('/api/coupons/validate', 'validateCoupon')->name('api.coupons.validate');
+});
 
 // Authentication routes
 Route::controller(LoginController::class)->group(function () {

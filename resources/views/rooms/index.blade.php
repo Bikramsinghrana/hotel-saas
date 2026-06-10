@@ -157,7 +157,7 @@
         .rooms-grid {
             display: grid;
             gap: 2rem;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
         }
 
         .room-card {
@@ -402,6 +402,9 @@
                     </div>
                 @endif
 
+                {{-- ── COMPACT OFFER BANNER ── --}}
+                @include('partials.offer-banner', ['style' => 'compact'])
+
                 <div class="rooms-grid">
                     @forelse($rooms as $room)
                         @php
@@ -425,6 +428,11 @@
                             <div class="room-img-wrap">
                                 <img src="{{ $imgSrc }}" alt="{{ $room->post_title }}" loading="lazy">
                                 <span class="room-tag">Available</span>
+                                @if($room->discount > 0)
+                                    <span class="room-offer-badge">{{ $room->discount }}% OFF</span>
+                                @elseif($offers->count() > 0)
+                                    <span class="room-offer-badge">Offer</span>
+                                @endif
                             </div>
                             <div class="room-body">
                                 <h3 class="room-name">{{ $room->room_type }}</h3>
@@ -520,6 +528,24 @@
                         </div>
                         <div id="coupon-message" class="mt-1 small"></div>
                     </div>
+
+                    @if($offers->whereNotNull('code')->count() > 0)
+                        <div class="sidebar-offers">
+                            <h6 class="fw-bold small mb-2 text-uppercase">Active Offers</h6>
+                            @foreach($offers->whereNotNull('code')->take(2) as $offer)
+                                <div class="sidebar-offer-item">
+                                    <div class="sidebar-offer-info">
+                                        <h6>{{ $offer->code }}</h6>
+                                        <span>{{ $offer->discount_type == 'percentage' ? $offer->discount_value.'%' : \App\Helpers\CurrencyHelper::format($offer->discount_value) }} Off</span>
+                                    </div>
+                                    <button class="btn btn-outline-dark btn-apply-small" 
+                                            onclick="document.getElementById('coupon-code').value='{{ $offer->code }}'; applyCoupon();">
+                                        APPLY
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
 
                     <div id="booking-summary">
                         {{-- Injected by JS --}}

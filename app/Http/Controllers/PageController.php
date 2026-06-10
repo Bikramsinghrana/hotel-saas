@@ -95,15 +95,18 @@ class PageController extends Controller
         $offers = collect();
         if (class_exists(\App\Models\Coupon::class)) {
             $now = now()->startOfDay();
-            $offers = \App\Models\Coupon::where('type', 'offer')
-                ->where('status', true)
+            $offers = \App\Models\Coupon::where('status', true)
                 ->where(function($q) use ($now) {
                     $q->where('start_date', '<=', $now)->orWhereNull('start_date');
                 })
                 ->where(function($q) use ($now) {
                     $q->where('expire_date', '>=', $now)->orWhereNull('expire_date');
                 })
-                ->where('tenant_id', $tenant ? $tenant->id : (\App\Models\Tenant::first()->id ?? 0))
+                ->where(function($q) use ($tenant) {
+                    if ($tenant) {
+                        $q->where('tenant_id', $tenant->id);
+                    }
+                })
                 ->latest()
                 ->get();
         }

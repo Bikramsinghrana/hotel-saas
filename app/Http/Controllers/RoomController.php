@@ -79,7 +79,27 @@ class RoomController extends Controller
             $rooms = collect(); // For now let's assume real data or empty
         }
 
-        return view('rooms.index', compact('rooms', 'tenant', 'navigations', 'useDummy', 'extraServices'));
+        // Fetch active offers/coupons
+        $offers = collect();
+        if (class_exists(Coupon::class)) {
+            $now = now()->startOfDay();
+            $offers = Coupon::where('status', true)
+                ->where(function($q) use ($now) {
+                    $q->where('start_date', '<=', $now)->orWhereNull('start_date');
+                })
+                ->where(function($q) use ($now) {
+                    $q->where('expire_date', '>=', $now)->orWhereNull('expire_date');
+                })
+                ->where(function($q) use ($tenant) {
+                    if ($tenant) {
+                        $q->where('tenant_id', $tenant->id);
+                    }
+                })
+                ->latest()
+                ->get();
+        }
+
+        return view('rooms.index', compact('rooms', 'tenant', 'navigations', 'useDummy', 'extraServices', 'offers'));
     }
 
     /**

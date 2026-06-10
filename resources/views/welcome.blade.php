@@ -221,27 +221,7 @@
         <p class="section-desc">Take advantage of our special events and seasonal discounts before they expire.</p>
     </div>
 
-    <div class="row g-4">
-        @foreach($offers as $offer)
-            <div class="col-md-6 col-lg-4">
-                <div class="offer-card position-relative overflow-hidden rounded-3 shadow-sm" style="height: 240px;">
-                    <img src="{{ $offer->image ? asset('storage/'.$offer->image) : 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&h=600&fit=crop' }}" 
-                         class="w-100 h-100 object-fit-cover transition-all" alt="{{ $offer->title }}">
-                    <div class="position-absolute inset-0 bg-dark opacity-40"></div>
-                    <div class="position-absolute inset-0 p-4 d-flex flex-column justify-content-end text-white">
-                        <div class="badge bg-success align-self-start mb-2">
-                            {{ $offer->discount_type == 'percentage' ? $offer->discount_value.'%' : \App\Helpers\CurrencyHelper::format($offer->discount_value) }} OFF
-                        </div>
-                        <h4 class="fw-bold mb-1">{{ $offer->title }}</h4>
-                        <p class="small mb-0 opacity-90 text-truncate">{{ $offer->description }}</p>
-                        @if($offer->code)
-                            <div class="mt-2 small fw-bold">Use Code: <span class="text-warning">{{ $offer->code }}</span></div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    </div>
+    @include('partials.offer-banner', ['style' => 'full'])
 </div>
 @endif
 

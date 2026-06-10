@@ -100,13 +100,13 @@
             
             @can('manage bookings')
             <li>
-                <a href="#">
+                <a href="{{ route('admin.rooms.index') }}" class="{{ request()->routeIs('admin.rooms.*') ? 'active' : '' }}">
                     <i class="fas fa-bed"></i>
                     <span>Rooms</span>
                 </a>
             </li>
             <li>
-                <a href="#">
+                <a href="{{ route('admin.bookings.index') }}" class="{{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">
                     <i class="fas fa-calendar-check"></i>
                     <span>Bookings</span>
                 </a>

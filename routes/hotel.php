@@ -82,3 +82,14 @@ Route::controller(App\Http\Controllers\Admin\TermController::class)->prefix('ter
 // Coupon & Offer Management
 Route::resource('coupons', App\Http\Controllers\Admin\CouponController::class);
 
+// Admin payments
+Route::get('payments', [App\Http\Controllers\Admin\PaymentAdminController::class, 'index'])->name('payments.index');
+Route::get('payments/{id}', [App\Http\Controllers\Admin\PaymentAdminController::class, 'show'])->name('payments.show');
+Route::post('payments/{id}/status', [App\Http\Controllers\Admin\PaymentAdminController::class, 'updateStatus'])->name('payments.update_status');
+Route::get('payments/invoice/{invoiceId}/download', [App\Http\Controllers\Admin\PaymentAdminController::class, 'downloadInvoice'])->name('payments.invoice.download');
+
+// Admin bookings
+Route::resource('bookings', App\Http\Controllers\Admin\BookingController::class);
+Route::post('bookings/bulk-delete', [App\Http\Controllers\Admin\BookingController::class, 'bulkDelete'])->name('bookings.bulk-delete');
+Route::post('bookings/import', [App\Http\Controllers\Admin\BookingController::class, 'importCsv'])->name('bookings.import');
+

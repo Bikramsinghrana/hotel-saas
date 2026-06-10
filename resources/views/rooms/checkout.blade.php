@@ -36,7 +36,7 @@
         <div class="checkout-body">
             <div>
                 <h4 class="mb-4">Guest Details</h4>
-                <form action="{{ route('rooms.book', $room->id) }}" method="POST">
+                <form id="bookingForm" action="{{ route('rooms.book.ajax', $room->id) }}" method="POST">
                     @csrf
                     <input type="hidden" name="check_in" value="{{ $checkIn }}">
                     <input type="hidden" name="check_out" value="{{ $checkOut }}">
@@ -59,6 +59,14 @@
                     <div class="form-group">
                         <label>Special Requests (Optional)</label>
                         <textarea name="notes" class="form-control" rows="3" placeholder="Any special requests or notes..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <div>
+                            <label style="margin-right:12px;"><input type="radio" name="payment_method" value="online" checked> Pay Online</label>
+                            <label><input type="radio" name="payment_method" value="cash"> Pay at Hotel (Cash)</label>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-submit">Confirm Booking</button>
@@ -119,3 +127,8 @@
 </div>
 
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/payment.js"></script>
+@endpush

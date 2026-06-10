@@ -15,6 +15,8 @@ use App\Services\CouponService;
 use App\Services\PriceCalculationService;
 use App\Services\BookingService;
 use App\Helpers\CurrencyHelper;
+use App\Services\PaymentServiceInterface;
+use App\Repositories\PaymentRepositoryInterface;
 
 class RoomController extends Controller
 {
@@ -27,20 +29,8 @@ class RoomController extends Controller
         $useDummy = false;
         $extraServices = collect();
 
-        // Resolve tenant from session or hostname
-        if (class_exists(Tenant::class)) {
-            try {
-                $host = $request->getHost();
-                $tenant = Tenant::where('domain', $host)->first();
-                if ($tenant) {
-                    session(['tenant_id' => $tenant->id]);
-                } elseif (session()->has('tenant_id')) {
-                    $tenant = Tenant::find(session('tenant_id'));
-                }
-            } catch (\Throwable $e) {
-                $tenant = null;
-            }
-        }
+        // Resolve tenant using helper
+        $tenant = function_exists('tenant') ? tenant() : null;
 
         // Load navigations... (keep existing logic)
         if (class_exists(Navigation::class)) {
@@ -190,9 +180,76 @@ class RoomController extends Controller
 
             session()->forget('pending_booking');
 
-            return redirect()->route('rooms.index')->with('success', 'Booking created successfully! Order #: ' . $order->order_number);
+            return redirect()->route('rooms.booking.complete', $order->id)->with('success', 'Booking created successfully! Order #: ' . $order->order_number);
         } catch (\Exception $e) {
             return back()->with('error', 'Booking failed: ' . $e->getMessage());
+        }
+    }
+
+    public function bookingComplete(Request $request, $orderId)
+    {
+        $order = \App\Models\RoomOrder::findOrFail($orderId);
+        return view('rooms.booking_complete', compact('order'));
+    }
+
+    public function bookAjax(Request $request, $id, PaymentServiceInterface $paymentService, PaymentRepositoryInterface $paymentRepo)
+    {
+        $request->validate([
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
+            'customer_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'payment_method' => 'required|in:online,cash',
+        ]);
+
+        $pending = session('pending_booking', []);
+        $bookingService = new BookingService(new PriceCalculationService(), new CouponService());
+
+        try {
+            $data = array_merge($request->all(), [
+                'room_id' => $id,
+                'quantity' => $pending['rooms'][0]['quantity'] ?? 1,
+                'nights' => \Carbon\Carbon::parse($request->check_in)->diffInDays(\Carbon\Carbon::parse($request->check_out)),
+                'extra_services' => collect($pending['rooms'][0]['extraServices'] ?? [])->pluck('id')->toArray(),
+                'coupon_code' => $pending['coupon'] ?? null
+            ]);
+
+            $order = $bookingService->createBooking($data);
+
+            // Update room availability
+            $roomService = new RoomService();
+            $roomService->updateRoomBookedCount($id, $request->check_in, $request->check_out, $data['quantity']);
+
+            session()->forget('pending_booking');
+
+            $paymentMethod = $request->get('payment_method');
+
+            if ($paymentMethod === 'online') {
+                $successUrl = route('payments.success');
+                $cancelUrl = route('payments.cancel');
+                $session = $paymentService->createCheckoutSession($order, $successUrl, $cancelUrl);
+                return response()->json(['status' => 'redirect', 'url' => $session->url]);
+            }
+
+            // Cash payment: create payment record pending
+            $payment = $paymentRepo->create([
+                'tenant_id' => $order->tenant_id ?? null,
+                'room_order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'amount' => $order->total_amount,
+                'currency' => $order->currency ?? 'USD',
+                'payment_method' => 'cash',
+                'gateway' => 'cash',
+                'status' => 'pending',
+            ]);
+
+            // Update order payment method/status
+            $order->update(['payment_method' => 'cash', 'payment_status' => 'pending']);
+
+            return response()->json(['status' => 'success', 'redirect' => route('rooms.booking.complete', $order->id)]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
 }

@@ -15,6 +15,8 @@ Route::controller(App\Http\Controllers\RoomController::class)->group(function ()
     Route::get('/rooms/{id}/checkout', 'checkout')->name('rooms.checkout');
     Route::post('/rooms/checkout-init', 'checkoutInit')->name('rooms.checkout.init');
     Route::post('/rooms/{id}/book', 'book')->name('rooms.book');
+        Route::post('/rooms/{id}/book-ajax', 'bookAjax')->name('rooms.book.ajax');
+    Route::get('/rooms/{order}/complete', 'bookingComplete')->name('rooms.booking.complete');
     Route::get('/api/coupons/validate', 'validateCoupon')->name('api.coupons.validate');
 });
 
@@ -52,5 +54,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/', 'update')->name('update');
     });
 });
+    use App\Http\Controllers\PaymentController;
+    use App\Http\Controllers\StripeWebhookController;
+
+    Route::post('payments/checkout/{orderId}', [PaymentController::class, 'checkout'])->name('payments.checkout');
+    Route::get('payments/success', [PaymentController::class, 'success'])->name('payments.success');
+    Route::get('payments/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
+    Route::get('payments/invoice/{invoiceId}', [PaymentController::class, 'downloadInvoice'])->name('payments.invoice.download');
+    Route::get('payments/status', [PaymentController::class, 'status'])->name('payments.status');
+    Route::get('payments/order/{orderId}/status', [PaymentController::class, 'orderStatus'])->name('payments.order.status');
+
+    // Stripe webhook endpoint (public)
+    Route::post('stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 

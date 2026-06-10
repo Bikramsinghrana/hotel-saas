@@ -92,4 +92,6 @@ Route::get('payments/invoice/{invoiceId}/download', [App\Http\Controllers\Admin\
 Route::resource('bookings', App\Http\Controllers\Admin\BookingController::class);
 Route::post('bookings/bulk-delete', [App\Http\Controllers\Admin\BookingController::class, 'bulkDelete'])->name('bookings.bulk-delete');
 Route::post('bookings/import', [App\Http\Controllers\Admin\BookingController::class, 'importCsv'])->name('bookings.import');
+Route::post('bookings/{id}/mark-paid', [App\Http\Controllers\Admin\BookingController::class, 'markPaid'])->name('bookings.mark-paid');
+Route::post('bookings/{id}/resend-email', [App\Http\Controllers\Admin\BookingController::class, 'resendEmail'])->name('bookings.resend-email');
 

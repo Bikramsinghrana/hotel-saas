@@ -7,6 +7,8 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BookingPaid;
 
 class PaymentService implements PaymentServiceInterface
 {
@@ -64,6 +66,31 @@ class PaymentService implements PaymentServiceInterface
         return $session;
     }
 
+    public function createPaymentIntent($order)
+    {
+        $stripeSecret = config('services.stripe.secret');
+        if (!$stripeSecret) {
+            throw new \RuntimeException('Stripe secret not configured.');
+        }
+
+        $stripe = new \Stripe\StripeClient($stripeSecret);
+
+        $amount = intval(round(($order->total_amount ?? 0) * 100));
+
+        $intent = $stripe->paymentIntents->create([
+            'amount' => $amount,
+            'currency' => strtolower($order->currency ?? 'USD'),
+            'metadata' => [
+                'order_id' => $order->id,
+            ],
+        ]);
+
+        return [
+            'client_secret' => $intent->client_secret ?? ($intent['client_secret'] ?? null),
+            'intent_id' => $intent->id ?? ($intent['id'] ?? null),
+        ];
+    }
+
     public function handleWebhook(array $payload, ?string $signature = null): void
     {
         $endpointSecret = config('services.stripe.webhook_secret');
@@ -107,10 +134,64 @@ class PaymentService implements PaymentServiceInterface
                         $order = $payment->order;
                         if ($order) {
                             $order->update(['status' => 'confirmed', 'payment_status' => 'paid']);
+                            // send booking confirmation email with invoice
+                            try {
+                                $invoice = \App\Models\Invoice::where('payment_id', $payment->id)->first();
+                                if ($order->email) {
+                                    Mail::to($order->email)->send(new BookingPaid($order, $invoice));
+                                }
+                            } catch (\Exception $e) {
+                                Log::warning('Failed to send booking paid email', ['error' => $e->getMessage()]);
+                            }
                         }
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to update payment after webhook', ['error' => $e->getMessage()]);
+                }
+            }
+        }
+
+        // Handle PaymentIntent succeeded events for Elements flows
+        if ($type === 'payment_intent.succeeded' && $data) {
+            $intent = $data;
+            $orderId = $intent->metadata->order_id ?? ($intent['metadata']['order_id'] ?? null);
+            $transactionId = $intent->id ?? ($intent['id'] ?? null);
+
+            if ($orderId) {
+                try {
+                    // create payment record linked to order
+                    $order = \App\Models\RoomOrder::find($orderId);
+                    if ($order) {
+                        $payment = \App\Models\Payment::create([
+                            'tenant_id' => $order->tenant_id ?? null,
+                            'room_order_id' => $order->id,
+                            'order_number' => $order->order_number ?? null,
+                            'amount' => $order->total_amount,
+                            'currency' => $order->currency ?? 'USD',
+                            'payment_method' => 'card',
+                            'gateway' => 'stripe',
+                            'status' => 'paid',
+                            'transaction_id' => $transactionId,
+                            'payment_response' => json_encode($intent),
+                            'paid_at' => now(),
+                        ]);
+
+                        // create invoice and update order
+                        $this->createInvoiceForPayment($payment);
+                        $order->update(['status' => 'confirmed', 'payment_status' => 'paid']);
+
+                        // send email
+                        try {
+                            $invoice = \App\Models\Invoice::where('payment_id', $payment->id)->first();
+                            if ($order->email) {
+                                Mail::to($order->email)->send(new BookingPaid($order, $invoice));
+                            }
+                        } catch (\Exception $e) {
+                            Log::warning('Failed to send booking paid email (intent flow)', ['error' => $e->getMessage()]);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to process payment_intent.succeeded webhook', ['error' => $e->getMessage()]);
                 }
             }
         }

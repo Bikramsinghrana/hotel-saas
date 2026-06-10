@@ -206,6 +206,13 @@ class RoomController extends Controller
         $pending = session('pending_booking', []);
         $bookingService = new BookingService(new PriceCalculationService(), new CouponService());
 
+        // If online payment requested, ensure Stripe is configured BEFORE creating the booking
+        if ($request->get('payment_method') === 'online') {
+            if (!config('services.stripe.key') || !config('services.stripe.secret')) {
+                return response()->json(['status' => 'error', 'message' => 'Payment gateway not configured. Please contact support.'], 500);
+            }
+        }
+
         try {
             $data = array_merge($request->all(), [
                 'room_id' => $id,
@@ -226,25 +233,12 @@ class RoomController extends Controller
             $paymentMethod = $request->get('payment_method');
 
             if ($paymentMethod === 'online') {
-                $successUrl = route('payments.success');
-                $cancelUrl = route('payments.cancel');
-                $session = $paymentService->createCheckoutSession($order, $successUrl, $cancelUrl);
-                return response()->json(['status' => 'redirect', 'url' => $session->url]);
+                // Create a PaymentIntent and return client_secret so frontend can collect card
+                $intent = $paymentService->createPaymentIntent($order);
+                return response()->json(['status' => 'intent', 'client_secret' => $intent['client_secret'] ?? null, 'order_id' => $order->id]);
             }
 
-            // Cash payment: create payment record pending
-            $payment = $paymentRepo->create([
-                'tenant_id' => $order->tenant_id ?? null,
-                'room_order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'amount' => $order->total_amount,
-                'currency' => $order->currency ?? 'USD',
-                'payment_method' => 'cash',
-                'gateway' => 'cash',
-                'status' => 'pending',
-            ]);
-
-            // Update order payment method/status
+            // Cash payment: do not create a Payment record, only mark order as cash/pending
             $order->update(['payment_method' => 'cash', 'payment_status' => 'pending']);
 
             return response()->json(['status' => 'success', 'redirect' => route('rooms.booking.complete', $order->id)]);

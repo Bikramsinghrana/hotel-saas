@@ -54,7 +54,44 @@ class BookingController extends Controller
             'payment_method' => 'nullable|string',
         ]);
 
+        $originalPaymentStatus = $booking->payment_status;
+
         $booking->update($data);
+
+        // If admin marked payment as paid now, generate invoice if missing and send email
+        if (($originalPaymentStatus !== 'paid') && ($booking->payment_status === 'paid')) {
+            try {
+                // find any payment record
+                $payment = \App\Models\Payment::where('room_order_id', $booking->id)->first();
+                $invoice = null;
+                if ($payment) {
+                    // create invoice if not exists
+                    $invoice = \App\Models\Invoice::where('payment_id', $payment->id)->first();
+                    if (!$invoice) {
+                        $invoice = (new \App\Services\PaymentService(app(\App\Repositories\PaymentRepositoryInterface::class)))->createInvoiceForPayment($payment);
+                    }
+                } else {
+                    // no payment record exists (cash-only booking), create a lightweight invoice
+                    $invoice = \App\Models\Invoice::create([
+                        'tenant_id' => $booking->tenant_id ?? null,
+                        'room_order_id' => $booking->id,
+                        'payment_id' => null,
+                        'invoice_number' => 'INV-' . strtoupper(\Illuminate\Support\Str::random(8)),
+                        'amount' => $booking->total_amount,
+                        'tax_amount' => 0,
+                        'total_amount' => $booking->total_amount,
+                        'issued_at' => now(),
+                    ]);
+                }
+
+                if ($booking->email) {
+                    \Illuminate\Support\Facades\Mail::to($booking->email)->send(new \App\Mail\BookingPaid($booking, $invoice));
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to send admin-mark-paid email', ['error' => $e->getMessage()]);
+            }
+        }
+
         return redirect()->route('admin.bookings.show', $booking->id)->with('success','Booking updated');
     }
 
@@ -74,6 +111,80 @@ class BookingController extends Controller
 
         RoomOrder::whereIn('id', $ids)->delete();
         return response()->json(['status' => 'success', 'deleted' => count($ids)]);
+    }
+
+    public function markPaid(Request $request, $id)
+    {
+        $booking = RoomOrder::findOrFail($id);
+        if ($booking->payment_status === 'paid') {
+            return response()->json(['status' => 'error', 'message' => 'Booking already paid'], 400);
+        }
+
+        // mark as paid
+        $booking->update(['payment_status' => 'paid']);
+
+        $emailSent = false;
+        $invoice = null;
+
+        try {
+            // create invoice if none exists
+            $payment = \App\Models\Payment::where('room_order_id', $booking->id)->first();
+
+            if ($payment) {
+                $invoice = \App\Models\Invoice::where('payment_id', $payment->id)->first();
+                if (!$invoice) {
+                    $invoice = (new \App\Services\PaymentService(app(\App\Repositories\PaymentRepositoryInterface::class)))->createInvoiceForPayment($payment);
+                }
+            } else {
+                $invoice = \App\Models\Invoice::create([
+                    'tenant_id' => $booking->tenant_id ?? null,
+                    'room_order_id' => $booking->id,
+                    'payment_id' => null,
+                    'invoice_number' => 'INV-' . strtoupper(\Illuminate\Support\Str::random(8)),
+                    'amount' => $booking->total_amount,
+                    'tax_amount' => 0,
+                    'total_amount' => $booking->total_amount,
+                    'issued_at' => now(),
+                ]);
+            }
+
+            // send email (attempt, but don't fail the whole request)
+            if ($booking->email) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($booking->email)->send(new \App\Mail\BookingPaid($booking, $invoice));
+                    $emailSent = true;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Failed to send mark-paid email', ['error' => $e->getMessage(), 'booking_id' => $booking->id]);
+                    $emailSent = false;
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to mark booking paid', ['error' => $e->getMessage(), 'booking_id' => $booking->id]);
+            return response()->json(['status' => 'error', 'message' => 'Failed to create invoice or send email'], 500);
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Booking marked as paid', 'email_sent' => $emailSent]);
+    }
+
+    public function resendEmail(Request $request, $id)
+    {
+        $booking = RoomOrder::findOrFail($id);
+
+        // Find invoice if exists
+        $payment = \App\Models\Payment::where('room_order_id', $booking->id)->first();
+        $invoice = $payment ? \App\Models\Invoice::where('payment_id', $payment->id)->first() : \App\Models\Invoice::where('room_order_id', $booking->id)->first();
+
+        if (!$booking->email) {
+            return response()->json(['status' => 'error', 'message' => 'No email on booking'], 400);
+        }
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($booking->email)->send(new \App\Mail\BookingPaid($booking, $invoice));
+            return response()->json(['status' => 'success', 'message' => 'Email resent', 'email_sent' => true]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to resend booking email', ['error' => $e->getMessage(), 'booking_id' => $booking->id]);
+            return response()->json(['status' => 'error', 'message' => 'Email send failed', 'email_sent' => false], 500);
+        }
     }
 
     public function importCsv(Request $request)

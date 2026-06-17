@@ -17,6 +17,7 @@ use App\Services\BookingService;
 use App\Helpers\CurrencyHelper;
 use App\Services\PaymentServiceInterface;
 use App\Repositories\PaymentRepositoryInterface;
+use Illuminate\Support\Facades\Log;
 
 class RoomController extends Controller
 {
@@ -193,7 +194,9 @@ class RoomController extends Controller
     }
 
     public function bookAjax(Request $request, $id, PaymentServiceInterface $paymentService, PaymentRepositoryInterface $paymentRepo)
-    {
+    {   
+        // dd($request->all());
+        Log::info('BookAjax request', ['request' => $request->all()]);
         $request->validate([
             'check_in' => 'required|date',
             'check_out' => 'required|date|after:check_in',
@@ -205,7 +208,7 @@ class RoomController extends Controller
 
         $pending = session('pending_booking', []);
         $bookingService = new BookingService(new PriceCalculationService(), new CouponService());
-
+        // dd(config('services.stripe'));
         // If online payment requested, ensure Stripe is configured BEFORE creating the booking
         if ($request->get('payment_method') === 'online') {
             if (!config('services.stripe.key') || !config('services.stripe.secret')) {
@@ -223,7 +226,7 @@ class RoomController extends Controller
             ]);
 
             $order = $bookingService->createBooking($data);
-
+            // Log::info('Booking created', ['order' => $order]);
             // Update room availability
             $roomService = new RoomService();
             $roomService->updateRoomBookedCount($id, $request->check_in, $request->check_out, $data['quantity']);

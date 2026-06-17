@@ -15,7 +15,7 @@ Route::controller(App\Http\Controllers\RoomController::class)->group(function ()
     Route::get('/rooms/{id}/checkout', 'checkout')->name('rooms.checkout');
     Route::post('/rooms/checkout-init', 'checkoutInit')->name('rooms.checkout.init');
     Route::post('/rooms/{id}/book', 'book')->name('rooms.book');
-        Route::post('/rooms/{id}/book-ajax', 'bookAjax')->name('rooms.book.ajax');
+    Route::post('/rooms/{id}/book-ajax', 'bookAjax')->name('rooms.book.ajax');
     Route::get('/rooms/{order}/complete', 'bookingComplete')->name('rooms.booking.complete');
     Route::get('/api/coupons/validate', 'validateCoupon')->name('api.coupons.validate');
 });

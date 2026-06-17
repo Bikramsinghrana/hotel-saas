@@ -18,6 +18,7 @@ class StripeWebhookController extends Controller
     public function handle(Request $request)
     {
         $payload = $request->all();
+        Log::info('Stripe webhook received', ['payload' => $payload]);
         $signature = $request->header('Stripe-Signature');
 
         try {

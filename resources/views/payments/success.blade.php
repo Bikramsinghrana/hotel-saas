@@ -1,22 +1,90 @@
-@extends(\App\Helpers\HotelPath::view('layouts.app'))
+@extends('layouts.app')
 
 @section('content')
-    <div class="container">
-        <div id="paymentStatusWrap">
-            <h2>Processing Payment</h2>
-            <p>Please wait while we confirm your payment. This page will update automatically.</p>
-            <div id="statusMessage">Checking status…</div>
-        </div>
-        <div id="paymentCompleteWrap" style="display:none;">
-            <h2>Payment Complete</h2>
-            <p>Your payment was successful. You can now view your booking or download the invoice.</p>
-            <div style="margin-top:1rem;">
-                <a id="btnHome" href="/" class="btn btn-secondary">Go to Home</a>
-                <a id="btnDashboard" href="{{ route('customer.dashboard') }}" class="btn btn-primary">My Dashboard</a>
-                <a id="btnInvoice" href="#" class="btn btn-outline-primary">Download Invoice</a>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+
+            {{-- Processing State --}}
+            <div id="paymentStatusWrap">
+                <div class="card border-0 shadow-lg rounded-4">
+                    <div class="card-body text-center p-5">
+
+                        <div class="spinner-border text-primary mb-4"
+                             style="width:4rem;height:4rem;"
+                             role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+
+                        <h2 class="fw-bold mb-3">
+                            Processing Payment
+                        </h2>
+
+                        <p class="text-muted mb-4">
+                            Please wait while we securely verify your payment.
+                            This page will update automatically.
+                        </p>
+
+                        <div id="statusMessage"
+                             class="alert alert-info rounded-pill">
+                            Checking payment status...
+                        </div>
+
+                    </div>
+                </div>
             </div>
+
+            {{-- Success State --}}
+            <div id="paymentCompleteWrap" style="display:none;">
+                <div class="card border-0 shadow-lg rounded-4">
+                    <div class="card-body text-center p-5">
+
+                        <div class="mb-4">
+                            <div class="bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center rounded-circle"
+                                 style="width:90px;height:90px;">
+                                <i class="fas fa-check-circle text-success fs-1"></i>
+                            </div>
+                        </div>
+
+                        <h2 class="fw-bold text-success mb-3">
+                            Payment Successful!
+                        </h2>
+
+                        <p class="text-muted mb-4">
+                            Thank you for your booking. Your payment has been
+                            received successfully and your reservation is now confirmed.
+                        </p>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-center">
+
+                            <a href="/"
+                               class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-home me-2"></i>
+                                Home
+                            </a>
+
+                            <a href="{{ route('customer.dashboard') }}"
+                               class="btn btn-primary px-4">
+                                <i class="fas fa-user me-2"></i>
+                                My Dashboard
+                            </a>
+
+                            <a id="btnInvoice"
+                               href="#"
+                               class="btn btn-success px-4">
+                                <i class="fas fa-file-invoice me-2"></i>
+                                Download Invoice
+                            </a>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
+</div>
 @endsection
 
 @push('scripts')

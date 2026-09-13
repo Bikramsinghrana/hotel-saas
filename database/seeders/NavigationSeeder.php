@@ -24,8 +24,12 @@ class NavigationSeeder extends Seeder
         Log::info('NavigationSeeder: Found ' . $tenants->count() . ' tenants to seeder navigation');
 
         if ($tenants->isEmpty()) {
-            //If needs insert default theme_id' => $hotelTheme->id, 'sub_theme_id' => $luxury->id
-            $tenants = [Tenant::create(['name' => 'Default Hotel', 'domain' => config('app.domain'),'sub_theme_id' => $luxury->id])];
+            $tenants = [Tenant::create([
+                'name' => 'Demo Hotel Resort',
+                'domain' => config('app.domain') ?? 'localhost',
+                'theme_id' => $hotelTheme->id,
+                'sub_theme_id' => $luxury->id
+            ])];
         }
 
         $defaultNavigations = [

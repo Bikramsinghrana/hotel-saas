@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,37 +11,38 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-        // Seed themes first
+        // 1. Seed Themes, Sub-Themes & Feature Catalog
         $this->call(ThemeSeeder::class);
 
-        // Roles & permissions should be seeded before demo data
+        // 2. Roles & Permissions (Spatie matrix)
         if (class_exists(\Database\Seeders\RolesAndPermissionsSeeder::class)) {
             $this->call(\Database\Seeders\RolesAndPermissionsSeeder::class);
         }
 
+        // 3. Seed Tenants and Users (Super Admin, 2 Merchant Admins, Managers, Staff, Customers)
         if (class_exists(\Database\Seeders\UserSeeder::class)) {
             $this->call(\Database\Seeders\UserSeeder::class);
         }
-       
-        // Seed navigation items for all tenants and inser default tenant if none exist
+
+        // 4. Navigation items for tenants
         $this->call(NavigationSeeder::class);
-        // $this->call(InitialDemoSeeder::class); // dummy data for room types, hotels,tenant, rooms, media, etc.
 
+        // 5. Subscription Plans & Tailored Merchant Subscriptions
+        $this->call(PlanAndSubscriptionSeeder::class);
 
+        // 6. CMS Pages & Blocks
         if (class_exists(\Database\Seeders\CmsSeeder::class)) {
             $this->call(\Database\Seeders\CmsSeeder::class);
         }
-        if (class_exists(\Database\Seeders\UserSeeder::class)) {
-            $this->call(\Database\Seeders\UserSeeder::class);
+
+        // 7. Room Types & Terms
+        if (class_exists(\Database\Seeders\RoomTypeSeeder::class)) {
+            $this->call(RoomTypeSeeder::class);
         }
 
-
-        $this->call(RoomTypeSeeder::class);
+        // 8. Demo Hotels, Rooms & Media
+        if (class_exists(\Database\Seeders\InitialDemoSeeder::class)) {
+            $this->call(InitialDemoSeeder::class);
+        }
     }
 }

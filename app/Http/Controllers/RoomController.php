@@ -128,11 +128,18 @@ class RoomController extends Controller
 
     public function checkout(Request $request, $id)
     {
-        $room = Room::findOrFail($id);
+        $room = Room::with(['hotel', 'roomType'])->findOrFail($id);
+        $tenant = $room->hotel?->tenant ?? \App\Models\Tenant::find(session('tenant_id')) ?? \App\Models\Tenant::first();
+        $navigations = \App\Models\Navigation::active()->ordered()->where(function($q) use ($tenant) {
+            if ($tenant) {
+                $q->where('tenant_id', $tenant->id);
+            }
+        })->get();
+
         $pending = session('pending_booking', []);
         
-        $checkIn = $request->get('check_in', now()->format('Y-m-d'));
-        $checkOut = $request->get('check_out', now()->addDay()->format('Y-m-d'));
+        $checkIn = $request->get('check_in', $pending['check_in'] ?? now()->format('Y-m-d'));
+        $checkOut = $request->get('check_out', $pending['check_out'] ?? now()->addDay()->format('Y-m-d'));
         
         $checkInDate = \Carbon\Carbon::parse($checkIn);
         $checkOutDate = \Carbon\Carbon::parse($checkOut);
@@ -148,7 +155,7 @@ class RoomController extends Controller
             $pending['coupon'] ?? null
         );
 
-        return view('rooms.checkout', compact('room', 'calc', 'checkIn', 'checkOut', 'nights', 'pending'));
+        return view('rooms.checkout', compact('room', 'tenant', 'navigations', 'calc', 'checkIn', 'checkOut', 'nights', 'pending'));
     }
 
     public function book(Request $request, $id)
@@ -190,7 +197,13 @@ class RoomController extends Controller
     public function bookingComplete(Request $request, $orderId)
     {
         $order = \App\Models\RoomOrder::findOrFail($orderId);
-        return view('rooms.booking_complete', compact('order'));
+        $tenant = $order->hotel?->tenant ?? \App\Models\Tenant::find(session('tenant_id')) ?? \App\Models\Tenant::first();
+        $navigations = \App\Models\Navigation::active()->ordered()->where(function($q) use ($tenant) {
+            if ($tenant) {
+                $q->where('tenant_id', $tenant->id);
+            }
+        })->get();
+        return view('rooms.booking_complete', compact('order', 'tenant', 'navigations'));
     }
 
     public function bookAjax(Request $request, $id, PaymentServiceInterface $paymentService, PaymentRepositoryInterface $paymentRepo)

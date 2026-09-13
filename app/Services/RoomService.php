@@ -30,7 +30,10 @@ class RoomService
         if (!empty($filters['name'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('room_slug', 'like', '%' . $filters['name'] . '%')
-                  ->orWhere('room_type', 'like', '%' . $filters['name'] . '%');
+                  ->orWhere('post_title', 'like', '%' . $filters['name'] . '%')
+                  ->orWhereHas('roomType', function($rt) use ($filters) {
+                      $rt->where('room_type', 'like', '%' . $filters['name'] . '%');
+                  });
             });
         }
 

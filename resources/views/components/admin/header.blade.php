@@ -9,7 +9,13 @@
             </span>
         </div>
     </div>
-    <div class="header-actions">
+    <div class="header-actions d-flex align-items-center gap-2">
+        @if(is_super_admin())
+            <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-primary" style="border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.85rem; font-size: 0.85rem;">
+                <i class="fas fa-crown text-warning"></i> Super Admin Panel
+            </a>
+        @endif
+
         <a href="{{ url('/') }}" target="_blank" class="header-link">View Site &nearr;</a>
         
         <div class="user-menu">

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('themes.hotel.layouts.app')
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('themes/hotel/css/room-booking.css') }}">

@@ -1,20 +1,36 @@
-
+@php
+    $currentTenant = $tenant ?? tenant() ?? \App\Models\Tenant::whereHas('theme', fn($q) => $q->where('key', 'hotel'))->first() ?? \App\Models\Tenant::first();
+@endphp
 <nav class="navbar" id="main-nav">
     <div class="navbar-inner">
         <a href="/" class="navbar-brand">
             <span class="brand-dot"></span>
-            {{ config('app.name', 'LuxuryBo') }}
+            {{ $currentTenant ? $currentTenant->name : config('app.name', 'Grand Palace Resort') }}
         </a>
 
         <ul class="navbar-nav">
-            @forelse($navigations ?? collect() as $nav)
-                <li><a href="{{ $nav->url }}" title="{{ $nav->content }}">{{ $nav->title }}</a></li>
+            @php
+                $navItems = $navigations ?? collect();
+                if ($navItems->isEmpty() && class_exists(\App\Models\Navigation::class)) {
+                    if ($currentTenant) {
+                        $navItems = \App\Models\Navigation::active()->ordered()->where('tenant_id', $currentTenant->id)->get();
+                    } else {
+                        $navItems = collect();
+                    }
+                }
+            @endphp
+
+            @forelse($navItems as $nav)
+                <li>
+                    <a href="{{ $nav->url }}" title="{{ $nav->content }}" class="{{ (request()->fullUrlIs(url($nav->url)) || request()->is(ltrim($nav->url, '/'))) ? 'active' : '' }}">
+                        {{ $nav->title }}
+                    </a>
+                </li>
             @empty
-                {{-- Fallback navigation if no dynamic navigation is configured --}}
                 <li><a href="/">Home</a></li>
-                <li><a href="/#rooms">Rooms</a></li>
-                <li><a href="/#amenities">Amenities</a></li>
-                <li><a href="/#book">Book Now</a></li>
+                <li><a href="{{ route('rooms.index') }}">Rooms & Suites</a></li>
+                <li><a href="/#why-choose-us">Amenities</a></li>
+                <li><a href="/#offers">Offers</a></li>
             @endforelse
         </ul>
 
@@ -32,7 +48,7 @@
             @else
                 <a href="{{ route('login') }}" class="btn-ghost">Log in</a>
                 @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="btn-primary">Book Your Stay</a>
+                    <a href="{{ route('rooms.index') }}" class="btn-primary">Book Your Stay</a>
                 @endif
             @endauth
         </div>

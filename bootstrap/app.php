@@ -16,15 +16,28 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
+            // Super Admin Platform Routes
+            Route::middleware(['web', 'auth'])->prefix('superadmin')->name('superadmin.')->group(function () {
+                if (file_exists(base_path('routes/superadmin.php'))) {
+                    require base_path('routes/superadmin.php');
+                }
+            });
+
+            // Tenant Theme Admin Routes
             Route::middleware(['web', 'auth'])->prefix('admin')->name('admin.')->group(function () {
-                    Route::group([], base_path('routes/hotel.php'));
-                    Route::group([], base_path('routes/resto.php'));
-                });
+                if (file_exists(base_path('routes/hotel.php'))) {
+                    require base_path('routes/hotel.php');
+                }
+                if (file_exists(base_path('routes/resto.php'))) {
+                    require base_path('routes/resto.php');
+                }
+            });
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             TenantMiddleware::class,
+            \App\Http\Middleware\ThemeMiddleware::class,
             HandleDatabaseConnection::class,
         ]);
     })

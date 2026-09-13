@@ -13,8 +13,7 @@ use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\RoomTypeController;
 use App\Http\Controllers\Admin\RoomController;
 
-// Admin Domain Specific Routes, set default (Prefix: admin, Name: admin.) ++++++++++++++++++++++++++++++++++++
-
+// Hotel Admin Routes (Prefix: admin, Name: admin.)
 Route::resource('roles', RoleController::class);
 Route::resource('hotels', HotelController::class);
 Route::post('hotels/bulk-delete', [HotelController::class, 'bulkDelete'])->name('hotels.bulk-delete');
@@ -57,6 +56,7 @@ Route::controller(HotelWizardController::class)->prefix('hotels/wizard')->name('
     Route::delete('{id}/media/{mediaId}', 'deleteMedia')->name('media.delete');
     Route::post('{id}/rooms', 'storeRoom')->name('rooms.store');
 });
+
 // Room & Wizard routes
 Route::resource('room-types', RoomTypeController::class);
 Route::resource('rooms', RoomController::class);
@@ -94,4 +94,3 @@ Route::post('bookings/bulk-delete', [App\Http\Controllers\Admin\BookingControlle
 Route::post('bookings/import', [App\Http\Controllers\Admin\BookingController::class, 'importCsv'])->name('bookings.import');
 Route::post('bookings/{id}/mark-paid', [App\Http\Controllers\Admin\BookingController::class, 'markPaid'])->name('bookings.mark-paid');
 Route::post('bookings/{id}/resend-email', [App\Http\Controllers\Admin\BookingController::class, 'resendEmail'])->name('bookings.resend-email');
-

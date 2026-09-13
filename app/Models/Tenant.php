@@ -9,16 +9,12 @@ class Tenant extends Model
 {
     use HasFactory;
 
-    /**
-     * Allow all columns to be saved (no mass-assignment protection issues).
-     * Direct property assignment e.g. $tenant->theme_id = 1 always works,
-     * but $guarded = [] also allows fill() and update() calls throughout the app.
-     */
     protected $guarded = [];
 
     protected $casts = [
-        'settings' => 'array',
-        'address'  => 'array',
+        'theme_config' => 'array',
+        'settings'     => 'array',
+        'address'      => 'array',
     ];
 
     public function theme()
@@ -29,6 +25,28 @@ class Tenant extends Model
     public function subTheme()
     {
         return $this->belongsTo(SubTheme::class);
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->whereIn('status', ['active', 'trialing'])
+            ->latest('id');
+    }
+
+    public function featureOverrides()
+    {
+        return $this->hasMany(TenantFeatureOverride::class);
+    }
+
+    public function subThemeAccesses()
+    {
+        return $this->hasMany(TenantSubThemeAccess::class);
     }
 
     public function hotels()

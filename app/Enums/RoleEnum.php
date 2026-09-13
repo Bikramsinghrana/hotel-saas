@@ -4,11 +4,13 @@ namespace App\Enums;
 
 enum RoleEnum: string
 {
-    case ADMIN = 'admin';
-    case MANAGER = 'manager';
-    case MERCHANT = 'merchant';
-    case CUSTOMER = 'customer';
-    case SELLER = 'seller';
+    case SUPER_ADMIN = 'super_admin';
+    case ADMIN       = 'admin';
+    case MERCHANT    = 'merchant';
+    case MANAGER     = 'manager';
+    case STAFF       = 'staff';
+    case SELLER      = 'seller';
+    case CUSTOMER    = 'customer';
 
     public static function values(): array
     {

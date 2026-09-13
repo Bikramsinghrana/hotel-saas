@@ -54,13 +54,19 @@ class LoginController extends Controller
                 return redirect()->intended(route('customer.dashboard', [], false) ?: '/customer/dashboard');
             }
 
-            // ── KEY FIX ──────────────────────────────────────────────────────────
-            // Store the tenant_id in session right after login so that tenant()
-            // helper works correctly on every subsequent request in the admin panel.
+            // Super Admin redirect to platform studio
+            if ($user && $user->hasRole(\App\Enums\RoleEnum::SUPER_ADMIN->value)) {
+                $defaultTenant = \App\Models\Tenant::first();
+                if ($defaultTenant) {
+                    session(['tenant_id' => $defaultTenant->id]);
+                }
+                return redirect()->intended(route('superadmin.dashboard', [], false) ?: '/superadmin/dashboard');
+            }
+
+            // Store the tenant_id in session right after login
             if ($user && $user->tenant_id) {
                 session(['tenant_id' => $user->tenant_id]);
             }
-            // ─────────────────────────────────────────────────────────────────────
 
             return redirect()->intended(route('admin.dashboard', [], false) ?: '/admin/dashboard');
         }

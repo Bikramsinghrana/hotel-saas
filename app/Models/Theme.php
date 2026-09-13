@@ -9,21 +9,25 @@ class Theme extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'key',
-        'name',
-        'status',
-        'description',
+    protected $guarded = [];
+
+    protected $casts = [
+        'is_core' => 'boolean',
     ];
 
     public function subThemes()
     {
         return $this->hasMany(SubTheme::class);
+    }
+
+    public function features()
+    {
+        return $this->hasMany(Feature::class);
+    }
+
+    public function plans()
+    {
+        return $this->hasMany(Plan::class);
     }
 
     public function tenants()

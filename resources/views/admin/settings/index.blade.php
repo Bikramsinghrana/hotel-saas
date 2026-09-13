@@ -154,6 +154,21 @@
     <!-- Settings Content -->
     <div class="settings-content">
 
+        @if(is_super_admin())
+        <div style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: #fff; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border: 1px solid rgba(245,158,11,0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <div class="d-flex align-items-center gap-3">
+                <span style="font-size: 2.2rem;">👑</span>
+                <div>
+                    <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem; color: #fde047;">Super Admin Platform Control</div>
+                    <div style="font-size: 0.85rem; color: #cbd5e1;">You have universal platform access. Configure this active tenant below or manage all tenants, themes, and subscription plans in the Super Admin Studio.</div>
+                </div>
+            </div>
+            <a href="{{ route('superadmin.dashboard') }}" class="btn btn-warning text-dark font-weight-bold" style="white-space: nowrap; font-weight: 700; border-radius: 8px; padding: 0.6rem 1.2rem;">
+                <i class="fas fa-shield-alt me-1"></i> Super Admin Studio &rarr;
+            </a>
+        </div>
+        @endif
+
         @if(session('setup_info'))
         <div style="background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             <span style="font-size: 2rem;">🚀</span>

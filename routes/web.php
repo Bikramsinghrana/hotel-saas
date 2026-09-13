@@ -9,7 +9,31 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 use App\Http\Controllers\User\ProfileController;
 
-Route::get('/', [PageController::class, 'index']);
+Route::get('/', [PageController::class, 'index'])->name('home');
+Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/contact', [PageController::class, 'contact'])->name('contact');
+Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact.submit');
+
+// Hotel Theme Front-end Routes
+Route::prefix('hotel')->name('hotel.')->group(function () {
+    Route::get('/about', [PageController::class, 'hotelAbout'])->name('about');
+    Route::get('/contact', [PageController::class, 'hotelContact'])->name('contact');
+    Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact.submit');
+    Route::get('/{subtheme?}', [PageController::class, 'hotelWelcome'])->name('welcome');
+});
+
+// Restaurant / Dining Theme Front-end Routes
+Route::prefix('resto')->name('resto.')->group(function () {
+    Route::get('/{subtheme?}', [PageController::class, 'restoWelcome'])->name('welcome');
+});
+Route::prefix('restaurant')->name('restaurant.')->group(function () {
+    Route::get('/{subtheme?}', [PageController::class, 'restoWelcome'])->name('welcome');
+});
+
+// Universal Dynamic Theme Front-end Routes
+Route::prefix('themes')->name('themes.')->group(function () {
+    Route::get('/{theme}/{subtheme?}', [PageController::class, 'themeWelcome'])->name('welcome');
+});
 Route::controller(App\Http\Controllers\RoomController::class)->group(function () {
     Route::get('/rooms/index', 'index')->name('rooms.index');
     Route::get('/rooms/{id}/checkout', 'checkout')->name('rooms.checkout');

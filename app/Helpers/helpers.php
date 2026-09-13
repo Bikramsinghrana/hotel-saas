@@ -9,12 +9,12 @@ if (! function_exists('tenant')) {
     {
         // Priority 1: session (most reliable after login sets it)
         if (session()->has('tenant_id')) {
-            return Tenant::find(session('tenant_id'));
+            return Tenant::with(['theme', 'subTheme'])->find(session('tenant_id'));
         }
 
         // Priority 2: authenticated user's tenant_id (handles cases where session wasn't set)
         if (auth()->check() && auth()->user()->tenant_id) {
-            $t = Tenant::find(auth()->user()->tenant_id);
+            $t = Tenant::with(['theme', 'subTheme'])->find(auth()->user()->tenant_id);
             if ($t) {
                 // Backfill the session so subsequent requests are fast
                 session(['tenant_id' => $t->id]);
@@ -171,3 +171,106 @@ if (!function_exists('deleteFile')) {
         }
     }
 }
+
+if (!function_exists('is_super_admin')) {
+    function is_super_admin($user = null): bool
+    {
+        $u = $user ?? auth()->user();
+        return (bool) ($u && $u->hasRole(\App\Enums\RoleEnum::SUPER_ADMIN->value));
+    }
+}
+
+if (!function_exists('can_action')) {
+    function can_action(string $permission, $user = null): bool
+    {
+        $u = $user ?? auth()->user();
+        if (!$u) {
+            return false;
+        }
+
+        // Super Admin has all permissions implicitly
+        if (is_super_admin($u)) {
+            return true;
+        }
+
+        try {
+            if ($u->hasPermissionTo($permission)) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            // Permission might not exist in database table
+        }
+
+        try {
+            return (bool) $u->can($permission);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+}
+
+if (!function_exists('authorize_action')) {
+    function authorize_action(string $permission, $user = null): void
+    {
+        if (!can_action($permission, $user)) {
+            abort(403, "You do not have permission to execute '{$permission}'.");
+        }
+    }
+}
+
+if (!function_exists('has_feature')) {
+    function has_feature(string $featureKey, ?Tenant $tenant = null): bool
+    {
+        if (is_super_admin()) {
+            return true;
+        }
+        $tenant = $tenant ?? tenant();
+        return app(\App\Services\TenantAccessService::class)->canAccessFeature($tenant, $featureKey);
+    }
+}
+
+if (!function_exists('feature_limit')) {
+    function feature_limit(string $featureKey, ?Tenant $tenant = null): ?string
+    {
+        $tenant = $tenant ?? tenant();
+        return app(\App\Services\TenantAccessService::class)->getFeatureLimit($tenant, $featureKey);
+    }
+}
+
+if (!function_exists('can_use_subtheme')) {
+    function can_use_subtheme($subTheme, ?Tenant $tenant = null): bool
+    {
+        if (is_super_admin()) {
+            return true;
+        }
+        $tenant = $tenant ?? tenant();
+        return app(\App\Services\TenantAccessService::class)->canAccessSubTheme($tenant, $subTheme);
+    }
+}
+
+if (!function_exists('can_use_theme')) {
+    function can_use_theme($theme, ?Tenant $tenant = null): bool
+    {
+        if (is_super_admin()) {
+            return true;
+        }
+        $tenant = $tenant ?? tenant();
+        return app(\App\Services\TenantAccessService::class)->canAccessTheme($tenant, $theme);
+    }
+}
+
+if (!function_exists('can_manage_theme')) {
+    function can_manage_theme($theme, ?Tenant $tenant = null): bool
+    {
+        return is_super_admin() || can_use_theme($theme, $tenant);
+    }
+}
+
+if (!function_exists('can_manage_subtheme')) {
+    function can_manage_subtheme($subTheme, ?Tenant $tenant = null): bool
+    {
+        return is_super_admin() || can_use_subtheme($subTheme, $tenant);
+    }
+}
+
+

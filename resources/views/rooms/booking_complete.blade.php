@@ -1,4 +1,6 @@
-@extends('layouts.app')
+@extends('themes.hotel.layouts.app')
+
+@section('title', 'Booking Confirmation | ' . ($order->order_number ?? 'Completed'))
 
 @section('content')
 

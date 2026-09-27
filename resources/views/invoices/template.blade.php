@@ -319,10 +319,23 @@
             <td class="text-end">-{{ number_format($totalDiscount, 2) }}</td>
         </tr>
         @endif
-        @if(($order->tax_amount ?? $invoice->tax_amount ?? 0) > 0)
+        @php
+            $taxAmt = (float)($order->tax_amount ?? $invoice->tax_amount ?? 0);
+            $cgstAmt = (float)($order->cgst_amount ?? ($taxAmt / 2));
+            $sgstAmt = (float)($order->sgst_amount ?? ($taxAmt / 2));
+        @endphp
+        @if($taxAmt > 0)
         <tr>
-            <td><strong>Taxes & Fees:</strong></td>
-            <td class="text-end">{{ number_format($order->tax_amount ?? $invoice->tax_amount, 2) }}</td>
+            <td><strong>GST & Taxes:</strong></td>
+            <td class="text-end">{{ number_format($taxAmt, 2) }}</td>
+        </tr>
+        <tr style="color: #64748b; font-size: 10.5px;">
+            <td style="padding-left: 15px;">&bull; Central GST (CGST 9%):</td>
+            <td class="text-end">+{{ number_format($cgstAmt, 2) }}</td>
+        </tr>
+        <tr style="color: #64748b; font-size: 10.5px;">
+            <td style="padding-left: 15px;">&bull; State GST (SGST 9%):</td>
+            <td class="text-end">+{{ number_format($sgstAmt, 2) }}</td>
         </tr>
         @endif
         <tr class="final-total">

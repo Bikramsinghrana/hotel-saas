@@ -561,15 +561,33 @@
     <script src="{{ asset('assets/common/js/booking.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Reset all select elements and checkboxes on refresh
+            document.querySelectorAll('.room-qty-select').forEach(sel => { sel.value = '0'; });
+            document.querySelectorAll('.extra-service-chk').forEach(chk => { chk.checked = false; });
+            const couponInput = document.getElementById('coupon-code');
+            if (couponInput) couponInput.value = '';
+            const couponMsgEl = document.getElementById('coupon-message');
+            if (couponMsgEl) couponMsgEl.innerHTML = '';
+
             const checkIn = '{{ request('check_in', now()->format('Y-m-d')) }}';
             const checkOut = '{{ request('check_out', now()->addDay()->format('Y-m-d')) }}';
             const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)));
+            @php
+                $taxConfig = app(\App\Services\PriceCalculationService::class)->getTaxConfig($tenant?->id ?? session('tenant_id'));
+                $gstRate = $taxConfig['tax_enabled'] ? (float)$taxConfig['gst_rate'] : 0;
+                $cgstRate = $taxConfig['tax_enabled'] ? (float)$taxConfig['cgst_rate'] : 0;
+                $sgstRate = $taxConfig['tax_enabled'] ? (float)$taxConfig['sgst_rate'] : 0;
+            @endphp
 
             BookingSystem.initBooking({
                 currencySymbol: '{{ \App\Helpers\CurrencyHelper::format(0, null)[0] ?? "₹" }}',
                 checkIn: checkIn,
                 checkOut: checkOut,
-                nights: nights
+                nights: nights,
+                taxPercent: {{ $gstRate }},
+                cgstRate: {{ $cgstRate }},
+                sgstRate: {{ $sgstRate }},
+                taxCalculationType: '{{ $taxConfig['tax_calculation_type'] ?? 'exclusive' }}'
             });
         });
 

@@ -250,9 +250,22 @@
                                 </div>
                             @endif
                             @if(($booking->tax_amount ?? 0) > 0)
-                                <div class="d-flex justify-content-between mb-2 small text-muted">
-                                    <span>Taxes & GST:</span>
-                                    <span>+{{ \App\Helpers\CurrencyHelper::format($booking->tax_amount) }}</span>
+                                @php
+                                    $bTax = (float)($booking->tax_amount ?? 0);
+                                    $bCgst = (float)($booking->cgst_amount ?? ($bTax / 2));
+                                    $bSgst = (float)($booking->sgst_amount ?? ($bTax / 2));
+                                @endphp
+                                <div class="d-flex justify-content-between mb-1 small text-muted">
+                                    <span>GST & Taxes:</span>
+                                    <span>+{{ \App\Helpers\CurrencyHelper::format($bTax) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1 ps-2 small text-muted" style="font-size: 0.8rem;">
+                                    <span>↳ Central GST (CGST 9%):</span>
+                                    <span>+{{ \App\Helpers\CurrencyHelper::format($bCgst) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 ps-2 small text-muted" style="font-size: 0.8rem;">
+                                    <span>↳ State GST (SGST 9%):</span>
+                                    <span>+{{ \App\Helpers\CurrencyHelper::format($bSgst) }}</span>
                                 </div>
                             @endif
                             <div class="d-flex justify-content-between pt-2 border-top">

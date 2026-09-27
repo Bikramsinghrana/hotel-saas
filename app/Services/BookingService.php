@@ -62,7 +62,7 @@ class BookingService
                 'special_request' => $data['notes'] ?? null,
                 'sub_total' => $calc['room_original_total'] + $calc['extra_total'],
                 'discount_amount' => $calc['total_discount'],
-                'tax_amount' => 0,
+                'tax_amount' => $calc['tax_amount'] ?? 0,
                 'total_amount' => $calc['total_payable'],
                 'payment_status' => 'pending',
                 'payment_method' => $data['payment_method'] ?? 'online',
@@ -78,6 +78,18 @@ class BookingService
                     'coupon_discount' => $calc['coupon_discount'],
                     'total_discount' => $calc['total_discount'],
                     'extra_services' => $calc['extra_services_list'] ?? [],
+
+                    // GST metadata
+                    'tax_enabled' => $calc['tax_enabled'] ?? true,
+                    'tax_rate' => $calc['tax_rate'] ?? 12,
+                    'gst_rate' => $calc['gst_rate'] ?? 12,
+                    'cgst_rate' => $calc['cgst_rate'] ?? 6,
+                    'sgst_rate' => $calc['sgst_rate'] ?? 6,
+                    'tax_amount' => $calc['tax_amount'] ?? 0,
+                    'cgst_amount' => $calc['cgst_amount'] ?? 0,
+                    'sgst_amount' => $calc['sgst_amount'] ?? 0,
+                    'tax_calculation_type' => $calc['tax_calculation_type'] ?? 'exclusive',
+                    'gstin_number' => $calc['gstin_number'] ?? '',
                     'is_guest' => !auth()->check(),
                 ]),
             ]);

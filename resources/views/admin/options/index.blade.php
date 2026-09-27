@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Dynamic Options & Configuration')
-@section('header_title', 'Dynamic Options & Multi-Management Configuration')
+@section('title', 'System Settings & Options')
+@section('header_title', 'System Settings & Options')
 
 @push('styles')
 <style>
@@ -10,7 +10,7 @@
 }
 .options-layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 260px 1fr;
     gap: 1.5rem;
 }
 @media (max-width: 992px) {
@@ -22,25 +22,27 @@
     background: #ffffff;
     border-radius: 1rem;
     border: 1px solid #e2e8f0;
-    padding: 1rem;
+    padding: 0.85rem;
     box-shadow: 0 4px 15px rgba(15, 23, 42, 0.03);
+    position: sticky;
+    top: 90px;
 }
 .category-link {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.85rem 1rem;
+    padding: 0.75rem 1rem;
     border-radius: 0.75rem;
     color: #475569;
     font-weight: 600;
-    font-size: 0.925rem;
+    font-size: 0.9rem;
     text-decoration: none;
     transition: all 0.2s ease;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
 }
 .category-link i {
-    font-size: 1.1rem;
-    width: 24px;
+    font-size: 1.05rem;
+    width: 22px;
     text-align: center;
     color: #94a3b8;
     transition: color 0.2s ease;
@@ -50,7 +52,7 @@
     color: #0f172a;
 }
 .category-link.active {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: #2563eb;
     color: #ffffff;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
@@ -70,7 +72,7 @@
     margin-bottom: 1.5rem;
 }
 .option-row {
-    padding: 1.25rem 1.5rem;
+    padding: 1.15rem 1.5rem;
     border-bottom: 1px solid #f1f5f9;
     transition: background-color 0.15s ease;
 }
@@ -82,26 +84,26 @@
 }
 .option-label {
     font-weight: 700;
-    font-size: 0.975rem;
+    font-size: 0.95rem;
     color: #0f172a;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.15rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 .option-key {
     font-family: var(--bs-font-monospace, monospace);
-    font-size: 0.775rem;
+    font-size: 0.75rem;
     color: #64748b;
     background: #f1f5f9;
-    padding: 0.15rem 0.45rem;
+    padding: 0.1rem 0.4rem;
     border-radius: 0.25rem;
 }
 .option-desc {
-    font-size: 0.85rem;
+    font-size: 0.825rem;
     color: #64748b;
     margin-bottom: 0;
-    line-height: 1.4;
+    line-height: 1.35;
 }
 .form-switch .form-check-input {
     width: 2.75rem;
@@ -113,46 +115,51 @@
     border-color: #10b981;
 }
 .btn-save-settings {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: #10b981;
     color: #ffffff;
     font-weight: 700;
     border: none;
     border-radius: 0.75rem;
-    padding: 0.75rem 2rem;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    padding: 0.65rem 1.75rem;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     transition: all 0.2s ease;
 }
 .btn-save-settings:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    background: #059669;
     color: #ffffff;
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
 }
-.scope-pill {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.25rem 0.6rem;
-    border-radius: 1rem;
+.gst-highlight-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
 }
 </style>
 @endpush
 
 @section('content')
 <div class="options-dashboard">
-    <!-- Header with Breadcrumb & New Option Button -->
+    <!-- Header with Breadcrumb & Quick Actions -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h2 class="h4 fw-bold text-dark mb-1">
-                <i class="fas fa-sliders-h text-primary me-2"></i> Dynamic Options & Configuration
+                <i class="fas fa-sliders-h text-primary me-2"></i> Settings & Options
             </h2>
             <p class="text-muted small mb-0">
-                Manage dynamic system settings, taxes, pagination, hotel policies, and restaurant parameters.
+                Centralized management for GST rates, hotel rules, pricing, invoices, and system limits.
             </p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-primary d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCreateOption">
+            <button type="submit" form="batchOptionsForm" class="btn btn-save-settings d-flex align-items-center gap-2">
+                <i class="fas fa-save"></i>
+                <span>Save All Settings</span>
+            </button>
+            <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3" data-bs-toggle="modal" data-bs-target="#modalCreateOption">
                 <i class="fas fa-plus-circle"></i>
-                <span>Add Dynamic Option</span>
+                <span>New Setting</span>
             </button>
         </div>
     </div>
@@ -205,9 +212,9 @@
             @endif
 
             <div class="col-md-{{ ($isSuperAdmin && $allTenants->isNotEmpty()) ? '4' : ($hotels->isNotEmpty() ? '8' : '12') }}">
-                <label class="form-label small fw-bold text-muted mb-1"><i class="fas fa-search text-muted me-1"></i> Search Option</label>
+                <label class="form-label small fw-bold text-muted mb-1"><i class="fas fa-search text-muted me-1"></i> Quick Search</label>
                 <div class="input-group input-group-sm">
-                    <input type="text" name="search" class="form-control" placeholder="Search by key, label or description..." value="{{ request('search') }}">
+                    <input type="text" name="search" class="form-control" placeholder="Search settings by name, key or description..." value="{{ request('search') }}">
                     <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i></button>
                     @if(request()->filled('search'))
                         <a href="{{ route('admin.options.index', ['group' => $activeGroup, 'tenant_id' => $selectedTenantId, 'hotel_id' => $selectedHotelId]) }}" class="btn btn-outline-danger"><i class="fas fa-times"></i></a>
@@ -223,7 +230,7 @@
         <aside>
             <div class="category-nav">
                 <div class="small fw-bold text-uppercase text-muted px-3 py-2 letter-spacing-1">
-                    Option Categories
+                    Categories
                 </div>
                 @foreach($groups as $grpKey => $grpMeta)
                     @php
@@ -255,10 +262,10 @@
                         <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center p-4 mb-3" style="width: 80px; height: 80px;">
                             <i class="fas fa-sliders-h fa-2x text-muted"></i>
                         </div>
-                        <h5 class="fw-bold text-dark">No Options Found</h5>
+                        <h5 class="fw-bold text-dark">No Settings Found</h5>
                         <p class="text-muted small mb-3">There are no options defined for this category yet.</p>
                         <button type="button" class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalCreateOption">
-                            <i class="fas fa-plus me-1"></i> Add First Option
+                            <i class="fas fa-plus me-1"></i> Add First Setting
                         </button>
                     </div>
                 @else
@@ -273,14 +280,25 @@
                             $groupMeta = $groups[$groupKey] ?? ['title' => ucfirst(str_replace('_', ' ', $groupKey)), 'icon' => 'fas fa-cog', 'desc' => ''];
                         @endphp
 
-                        <div class="option-card">
+                        <div class="option-card" id="group_section_{{ $groupKey }}">
                             <div class="p-3 px-4 bg-light border-bottom d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="{{ $groupMeta['icon'] }} text-primary"></i>
                                     <h5 class="fw-bold text-dark mb-0">{{ $groupMeta['title'] }}</h5>
                                 </div>
-                                <span class="badge bg-primary-subtle text-primary">{{ $groupItems->count() }} Option(s)</span>
+                                <span class="badge bg-primary-subtle text-primary">{{ $groupItems->count() }} Item(s)</span>
                             </div>
+
+                            @if($groupKey === 'tax_gst')
+                                <div class="px-4 pt-3 pb-1">
+                                    <div class="gst-highlight-box d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center gap-2 text-success">
+                                            <i class="fas fa-calculator fs-5"></i>
+                                            <span class="small fw-bold">GST Auto-Calculator Active: Changing Standard GST (e.g. 18%) automatically calculates Central GST (9%) and State GST (9%).</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
 
                             @foreach($groupItems as $opt)
                                 <div class="option-row" id="optionRow_{{ $opt->id }}">
@@ -315,13 +333,17 @@
                                                 </div>
 
                                             @elseif($opt->type === 'number' || $opt->type === 'float')
-                                                <div class="input-group input-group-sm" style="max-width: 220px;">
-                                                    <input type="number" name="options[{{ $opt->key }}]" 
-                                                           class="form-control" 
+                                                <div class="input-group input-group-sm" style="max-width: 240px;">
+                                                    <input type="number" 
+                                                           name="options[{{ $opt->key }}]" 
+                                                           id="input_opt_{{ $opt->key }}"
+                                                           class="form-control fw-semibold" 
                                                            value="{{ $opt->value }}" 
-                                                           step="{{ $opt->type === 'float' ? '0.01' : '1' }}">
+                                                           step="{{ $opt->type === 'float' ? '0.01' : '1' }}"
+                                                           @if($opt->key === 'gst_rate') oninput="syncGSTRates(this.value)" @endif>
+                                                    
                                                     @if(str_contains($opt->key, 'rate') || str_contains($opt->key, 'percent') || str_contains($opt->key, 'tax') || str_contains($opt->key, 'gst'))
-                                                        <span class="input-group-text bg-light text-muted">%</span>
+                                                        <span class="input-group-text bg-light text-muted fw-bold">%</span>
                                                     @elseif(str_contains($opt->key, 'hours'))
                                                         <span class="input-group-text bg-light text-muted">Hrs</span>
                                                     @elseif(str_contains($opt->key, 'minutes'))
@@ -330,7 +352,7 @@
                                                 </div>
 
                                             @elseif($opt->type === 'select')
-                                                <select name="options[{{ $opt->key }}]" class="form-select form-select-sm" style="max-width: 260px;">
+                                                <select name="options[{{ $opt->key }}]" class="form-select form-select-sm fw-semibold" style="max-width: 240px;">
                                                     @if(!empty($opt->options_list) && is_array($opt->options_list))
                                                         @foreach($opt->options_list as $choiceKey => $choiceVal)
                                                             <option value="{{ $choiceKey }}" {{ (string)$opt->value === (string)$choiceKey ? 'selected' : '' }}>
@@ -338,8 +360,8 @@
                                                             </option>
                                                         @endforeach
                                                     @else
+                                                        <option value="exclusive" {{ $opt->value === 'exclusive' ? 'selected' : '' }}>Exclusive (Standard)</option>
                                                         <option value="inclusive" {{ $opt->value === 'inclusive' ? 'selected' : '' }}>Inclusive</option>
-                                                        <option value="exclusive" {{ $opt->value === 'exclusive' ? 'selected' : '' }}>Exclusive</option>
                                                     @endif
                                                 </select>
 
@@ -353,7 +375,7 @@
                                                 <textarea name="options[{{ $opt->key }}]" class="form-control font-monospace small" rows="2" placeholder="JSON content">{{ is_array($opt->typed_value) ? json_encode($opt->typed_value, JSON_PRETTY_PRINT) : $opt->value }}</textarea>
 
                                             @else
-                                                <input type="text" name="options[{{ $opt->key }}]" class="form-control form-control-sm" value="{{ $opt->value }}" placeholder="Enter setting value...">
+                                                <input type="text" name="options[{{ $opt->key }}]" class="form-control form-control-sm fw-semibold" value="{{ $opt->value }}" placeholder="Enter value...">
                                             @endif
                                         </div>
 
@@ -364,7 +386,7 @@
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             @else
-                                                <span class="text-muted" title="System core option (Locked)"><i class="fas fa-lock"></i></span>
+                                                <span class="text-muted" title="System core setting (Protected)"><i class="fas fa-lock"></i></span>
                                             @endif
                                         </div>
                                     </div>
@@ -376,10 +398,10 @@
                     <!-- Save Floating / Footer Action Bar -->
                     <div class="d-flex align-items-center justify-content-between p-3 bg-white border rounded-4 shadow-sm mt-3">
                         <div class="text-muted small">
-                            <i class="fas fa-info-circle text-primary me-1"></i> Changes apply immediately and invalidate the cache.
+                            <i class="fas fa-info-circle text-primary me-1"></i> All changes take effect immediately across all booking and room checkout calculations.
                         </div>
                         <button type="submit" class="btn btn-save-settings">
-                            <i class="fas fa-save me-2"></i> Save Changes
+                            <i class="fas fa-save me-2"></i> Save All Settings
                         </button>
                     </div>
                 @endif
@@ -394,7 +416,7 @@
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-bottom p-4">
                 <h5 class="modal-title fw-bold text-dark" id="modalCreateOptionLabel">
-                    <i class="fas fa-plus-circle text-primary me-2"></i> Create Dynamic Option
+                    <i class="fas fa-plus-circle text-primary me-2"></i> Add New Setting
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -406,7 +428,7 @@
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">Option Key <span class="text-danger">*</span></label>
+                            <label class="form-label small fw-bold">Setting Key <span class="text-danger">*</span></label>
                             <input type="text" name="key" class="form-control form-control-sm font-monospace" placeholder="e.g. table_tax_rate" required pattern="[a-zA-Z0-9_]+">
                             <small class="text-muted" style="font-size: 0.75rem;">Only letters, numbers, and underscores.</small>
                         </div>
@@ -417,15 +439,15 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">Category Group <span class="text-danger">*</span></label>
+                            <label class="form-label small fw-bold">Category <span class="text-danger">*</span></label>
                             <select name="group" class="form-select form-select-sm" required>
                                 <option value="hotel">Hotel & Booking</option>
-                                <option value="restaurant">Restaurant & Dining</option>
                                 <option value="tax_gst">Tax & GST System</option>
-                                <option value="pagination">Pagination & Limits</option>
                                 <option value="currency">Currency & Localization</option>
                                 <option value="invoice">Invoicing & Billing</option>
-                                <option value="general" selected>General Information</option>
+                                <option value="pagination">Pagination & Limits</option>
+                                <option value="restaurant">Restaurant & Dining</option>
+                                <option value="general" selected>General Settings</option>
                             </select>
                         </div>
 
@@ -453,8 +475,8 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label small fw-bold">Description / Tooltip</label>
-                            <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="Explain what this configuration controls..."></textarea>
+                            <label class="form-label small fw-bold">Description / Helper Note</label>
+                            <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="Explain what this setting controls..."></textarea>
                         </div>
 
                         <div class="col-md-6">
@@ -475,7 +497,7 @@
 
                 <div class="modal-footer border-top p-3 bg-light">
                     <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">Create Option</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">Create Setting</button>
                 </div>
             </form>
         </div>
@@ -492,9 +514,24 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+function syncGSTRates(val) {
+    const gst = parseFloat(val) || 0;
+    const half = (gst / 2).toFixed(2).replace(/\.00$/, '');
+    
+    const cgstInput = document.getElementById('input_opt_cgst_rate');
+    const sgstInput = document.getElementById('input_opt_sgst_rate');
+    const igstInput = document.getElementById('input_opt_igst_rate');
+
+    if (cgstInput) cgstInput.value = half;
+    if (sgstInput) sgstInput.value = half;
+    if (igstInput) igstInput.value = gst;
+}
+
 function toggleSelectOptionsInput(type) {
     const listGrp = document.getElementById('optionsListGroup');
-    listGrp.style.display = (type === 'select') ? 'block' : 'none';
+    if (listGrp) {
+        listGrp.style.display = (type === 'select') ? 'block' : 'none';
+    }
 }
 
 function quickUpdateOption(key, value) {
@@ -542,8 +579,8 @@ function quickUpdateOption(key, value) {
 
 function deleteOption(id, key) {
     Swal.fire({
-        title: 'Delete Option?',
-        text: `Are you sure you want to delete option "${key}"?`,
+        title: 'Delete Setting?',
+        text: `Are you sure you want to delete setting "${key}"?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',

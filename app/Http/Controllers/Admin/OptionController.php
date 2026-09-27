@@ -125,6 +125,20 @@ class OptionController extends Controller
             return back()->with('error', 'No options submitted to update.');
         }
 
+        // If gst_rate is supplied, auto calculate CGST/SGST/IGST if not individually set
+        if (isset($values['gst_rate'])) {
+            $gst = (float) $values['gst_rate'];
+            if (!isset($values['cgst_rate']) || $values['cgst_rate'] === '') {
+                $values['cgst_rate'] = round($gst / 2, 2);
+            }
+            if (!isset($values['sgst_rate']) || $values['sgst_rate'] === '') {
+                $values['sgst_rate'] = round($gst / 2, 2);
+            }
+            if (!isset($values['igst_rate']) || $values['igst_rate'] === '') {
+                $values['igst_rate'] = $gst;
+            }
+        }
+
         foreach ($values as $key => $val) {
             // Find reference option to know type & group
             $refOption = Option::where('key', $key)->first();
@@ -189,6 +203,15 @@ class OptionController extends Controller
             $tenantId,
             $hotelId
         );
+
+        // Auto sync child GST rates when standard gst_rate is updated
+        if ($key === 'gst_rate') {
+            $gst = (float) $val;
+            $half = round($gst / 2, 2);
+            $this->optionService->set('cgst_rate', $half, 'tax_gst', 'float', $tenantId, $hotelId);
+            $this->optionService->set('sgst_rate', $half, 'tax_gst', 'float', $tenantId, $hotelId);
+            $this->optionService->set('igst_rate', $gst, 'tax_gst', 'float', $tenantId, $hotelId);
+        }
 
         return response()->json([
             'success' => true,

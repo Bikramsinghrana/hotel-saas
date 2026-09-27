@@ -17,7 +17,8 @@ const BookingSystem = {
         checkOut: '',
         nights: 1,
         hotelId: null,
-        taxPercent: 0,
+        taxPercent: 18,
+        taxCalculationType: 'exclusive',
     },
 
     /**
@@ -25,14 +26,29 @@ const BookingSystem = {
      */
     initBooking(config = {}) {
         this.config = { ...this.config, ...config };
+        this.state.rooms = [];
+        this.state.coupon = null;
         if (config.checkIn) this.state.checkIn = config.checkIn;
         if (config.checkOut) this.state.checkOut = config.checkOut;
         if (config.nights) this.state.nights = parseInt(config.nights) || 1;
         if (config.hotelId) this.state.hotelId = config.hotelId;
+        if (config.taxPercent !== undefined) this.state.taxPercent = parseFloat(config.taxPercent);
+        if (config.cgstRate !== undefined) this.state.cgstRate = parseFloat(config.cgstRate);
+        if (config.sgstRate !== undefined) this.state.sgstRate = parseFloat(config.sgstRate);
+        if (config.taxCalculationType !== undefined) this.state.taxCalculationType = config.taxCalculationType;
 
-        console.log('Booking System Initialized with stay:', this.state.checkIn, 'to', this.state.checkOut, '(', this.state.nights, 'nights)');
+        console.log('Booking System Initialized with stay:', this.state.checkIn, 'to', this.state.checkOut, '(', this.state.nights, 'nights)', 'GST:', this.state.taxPercent + '%');
 
-        // Initial render if elements exist
+        // Reset sidebar on initial load
+        this.renderBookingSummary();
+    },
+
+    /**
+     * Reset all booking selections
+     */
+    resetBooking() {
+        this.state.rooms = [];
+        this.state.coupon = null;
         this.renderBookingSummary();
     },
 
@@ -137,8 +153,18 @@ const BookingSystem = {
     /**
      * Remove applied coupon
      */
-    removeCoupon() {
+    async removeCoupon() {
         this.state.coupon = null;
+        try {
+            await fetch('/api/coupons/validate?code=__NONE__', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+        } catch (e) {
+            console.error('Error clearing coupon session:', e);
+        }
         this.renderBookingSummary();
         return { success: true, message: 'Coupon removed.' };
     },
@@ -178,7 +204,37 @@ const BookingSystem = {
             }
         }
 
-        const total = Math.max(0, subtotal - couponDiscount);
+        const netSubtotal = Math.max(0, subtotal - couponDiscount);
+        const taxRate = (this.state.taxPercent !== undefined && this.state.taxPercent !== null) 
+            ? parseFloat(this.state.taxPercent) 
+            : 18;
+        const cgstRate = (this.state.cgstRate !== undefined && this.state.cgstRate !== null)
+            ? parseFloat(this.state.cgstRate)
+            : (taxRate / 2);
+        const sgstRate = (this.state.sgstRate !== undefined && this.state.sgstRate !== null)
+            ? parseFloat(this.state.sgstRate)
+            : (taxRate / 2);
+        const taxCalcType = this.state.taxCalculationType || 'exclusive';
+
+        let taxAmount = 0;
+        let cgstAmount = 0;
+        let sgstAmount = 0;
+        let total = netSubtotal;
+
+        if (taxRate > 0 && netSubtotal > 0) {
+            if (taxCalcType === 'inclusive') {
+                taxAmount = netSubtotal - (netSubtotal / (1 + (taxRate / 100)));
+                cgstAmount = taxAmount / 2;
+                sgstAmount = taxAmount / 2;
+                total = netSubtotal;
+            } else {
+                taxAmount = (netSubtotal * taxRate) / 100;
+                cgstAmount = (netSubtotal * cgstRate) / 100;
+                sgstAmount = (netSubtotal * sgstRate) / 100;
+                total = netSubtotal + taxAmount;
+            }
+        }
+
         const totalDiscount = roomDiscountTotal + couponDiscount;
 
         return {
@@ -187,7 +243,15 @@ const BookingSystem = {
             roomSubtotal,
             extraSubtotal,
             subtotal,
+            netSubtotal,
             couponDiscount,
+            taxRate,
+            cgstRate,
+            sgstRate,
+            taxAmount,
+            cgstAmount,
+            sgstAmount,
+            taxCalcType,
             totalDiscount,
             total,
             itemCount: this.state.rooms.reduce((acc, r) => acc + (parseInt(r.quantity) || 0), 0)
@@ -279,16 +343,16 @@ const BookingSystem = {
                     <strong class="text-dark">${this.state.nights} Night(s)</strong>
                 </div>
                 <div class="d-flex justify-content-between py-1">
-                    <span>Subtotal:</span>
-                    <span class="text-dark">${this.formatCurrency(totals.subtotal)}</span>
+                    <span>Rooms Subtotal:</span>
+                    <span class="text-dark fw-semibold">${this.formatCurrency(totals.roomSubtotal)}</span>
                 </div>
         `;
 
-        if (totals.roomDiscountTotal > 0) {
+        if (totals.extraSubtotal > 0) {
             html += `
-                <div class="d-flex justify-content-between py-1 text-success fw-semibold">
-                    <span><i class="fas fa-gift me-1"></i> Room Offer:</span>
-                    <span>-${this.formatCurrency(totals.roomDiscountTotal)}</span>
+                <div class="d-flex justify-content-between py-1 text-secondary">
+                    <span>Extra Services:</span>
+                    <span class="text-dark fw-semibold">+${this.formatCurrency(totals.extraSubtotal)}</span>
                 </div>
             `;
         }
@@ -298,6 +362,32 @@ const BookingSystem = {
                 <div class="d-flex justify-content-between py-1 text-success fw-bold">
                     <span><i class="fas fa-tag me-1"></i> Coupon (${this.state.coupon.code}):</span>
                     <span>-${this.formatCurrency(totals.couponDiscount)}</span>
+                </div>
+            `;
+        }
+
+        if (totals.taxAmount > 0) {
+            html += `
+                <div class="d-flex justify-content-between py-1 text-dark fw-semibold">
+                    <span><i class="fas fa-receipt me-1 text-primary"></i> GST & Taxes (${totals.taxRate}%):</span>
+                    <span>+${this.formatCurrency(totals.taxAmount)}</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 text-muted ps-3" style="font-size: 0.82rem;">
+                    <span>↳ Central GST (CGST ${totals.cgstRate}%):</span>
+                    <span class="text-dark">+${this.formatCurrency(totals.cgstAmount)}</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 text-muted ps-3" style="font-size: 0.82rem;">
+                    <span>↳ State GST (SGST ${totals.sgstRate}%):</span>
+                    <span class="text-dark">+${this.formatCurrency(totals.sgstAmount)}</span>
+                </div>
+            `;
+        }
+
+        if (totals.roomDiscountTotal > 0) {
+            html += `
+                <div class="d-flex justify-content-between py-1 text-success small fw-semibold border-top mt-1 pt-1">
+                    <span><i class="fas fa-gift me-1"></i> Room Offer Savings:</span>
+                    <span>-${this.formatCurrency(totals.roomDiscountTotal)}</span>
                 </div>
             `;
         }

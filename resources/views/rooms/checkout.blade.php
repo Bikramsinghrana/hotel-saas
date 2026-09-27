@@ -188,7 +188,12 @@
                     <input type="hidden" name="check_in" value="{{ $checkIn }}">
                     <input type="hidden" name="check_out" value="{{ $checkOut }}">
                     <input type="hidden" name="quantity" id="formQuantity" value="{{ $quantity ?? 1 }}">
-                    <input type="hidden" name="coupon_code" id="formCouponCode" value="{{ $calc['coupon_code'] ?? $couponCode ?? '' }}">
+                    <input type="hidden" name="coupon_code" id="formCouponCode" value="{{ $effectiveCoupon ?? $calc['coupon_code'] ?? $couponCode ?? '' }}">
+                    @if(!empty($extraServices))
+                        @foreach((array)$extraServices as $serviceId)
+                            <input type="hidden" name="extra_services[]" value="{{ is_array($serviceId) ? ($serviceId['id'] ?? '') : $serviceId }}">
+                        @endforeach
+                    @endif
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-12">
@@ -371,6 +376,22 @@
                     <span>Total Discount Saved: <strong id="totalDiscountVal">{{ \App\Helpers\CurrencyHelper::format($calc['total_discount']) }}</strong></span>
                 </div>
 
+                <!-- Taxes & GST (Individual Breakdown) -->
+                <div id="taxSection" style="display: {{ ($calc['tax_amount'] ?? 0) > 0 ? 'block' : 'none' }};">
+                    <div class="summary-row text-dark fw-semibold" id="taxRow">
+                        <span><i class="fas fa-receipt text-primary me-1"></i> GST & Taxes (<span id="taxRateLabel">{{ $calc['tax_rate'] ?? 18 }}%</span>)</span>
+                        <span id="summaryTaxAmount">+{{ \App\Helpers\CurrencyHelper::format($calc['tax_amount'] ?? 0) }}</span>
+                    </div>
+                    <div class="summary-row text-muted ps-3 small" id="cgstRow" style="font-size: 0.85rem;">
+                        <span>↳ Central GST (CGST <span id="cgstRateLabel">{{ $calc['cgst_rate'] ?? 9 }}%</span>)</span>
+                        <span class="text-dark fw-medium" id="summaryCgstAmount">+{{ \App\Helpers\CurrencyHelper::format($calc['cgst_amount'] ?? (($calc['tax_amount'] ?? 0) / 2)) }}</span>
+                    </div>
+                    <div class="summary-row text-muted ps-3 small" id="sgstRow" style="font-size: 0.85rem;">
+                        <span>↳ State GST (SGST <span id="sgstRateLabel">{{ $calc['sgst_rate'] ?? 9 }}%</span>)</span>
+                        <span class="text-dark fw-medium" id="summarySgstAmount">+{{ \App\Helpers\CurrencyHelper::format($calc['sgst_amount'] ?? (($calc['tax_amount'] ?? 0) / 2)) }}</span>
+                    </div>
+                </div>
+
                 <!-- Total Amount Payable -->
                 <div class="summary-total">
                     <span>Total Amount</span>
@@ -383,17 +404,22 @@
                         <i class="fas fa-tags text-primary me-1"></i> Promo / Coupon Code
                     </label>
                     <div class="input-group">
-                        <input type="text" id="couponInput" class="form-control text-uppercase font-monospace" placeholder="e.g. SUMMER25" value="{{ $effectiveCoupon ?? $calc['coupon_code'] ?? '' }}">
+                        <input type="text" id="couponInput" class="form-control text-uppercase font-monospace" placeholder="e.g. SUMMER25" value="{{ $couponCode ?? $effectiveCoupon ?? $calc['coupon_code'] ?? '' }}">
                         <button class="btn btn-primary fw-semibold px-3" type="button" id="btnApplyCoupon">
                             <span id="applyCouponText">Apply</span>
                             <span id="applyCouponSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
                         </button>
                     </div>
-                    <div id="couponMessage" class="mt-2 small" style="display: {{ !empty($effectiveCoupon ?? $calc['coupon_code']) && $calc['coupon_discount'] > 0 ? 'block' : 'none' }};">
-                        @if(!empty($effectiveCoupon ?? $calc['coupon_code']) && $calc['coupon_discount'] > 0)
+                    <div id="couponMessage" class="mt-2 small" style="display: {{ (!empty($effectiveCoupon ?? $calc['coupon_code']) && ($calc['coupon_discount'] ?? 0) > 0) || !empty($calc['coupon_error']) ? 'block' : 'none' }};">
+                        @if(!empty($effectiveCoupon ?? $calc['coupon_code']) && ($calc['coupon_discount'] ?? 0) > 0)
                             <div class="d-flex align-items-center justify-content-between text-success fw-semibold bg-success-subtle p-2 rounded">
                                 <span><i class="fas fa-check-circle me-1"></i> Applied: <strong>{{ $effectiveCoupon ?? $calc['coupon_code'] }}</strong></span>
                                 <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold" id="btnRemoveCoupon">Remove</button>
+                            </div>
+                        @elseif(!empty($calc['coupon_error']))
+                            <div class="d-flex align-items-center justify-content-between text-danger fw-semibold bg-danger-subtle p-2 rounded">
+                                <span><i class="fas fa-exclamation-circle me-1"></i> {{ $calc['coupon_error'] }}</span>
+                                <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold" id="btnRemoveCoupon">Clear</button>
                             </div>
                         @endif
                     </div>
@@ -426,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const checkIn = "{{ $checkIn }}";
     const checkOut = "{{ $checkOut }}";
     const quantity = {{ $quantity ?? 1 }};
-    const extraServices = @json($pending['rooms'][0]['extraServices'] ?? []);
+    const extraServices = @json($extraServices ?? []);
 
     function setCouponLoading(loading) {
         if (loading) {
@@ -479,6 +505,34 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 savingsCallout.style.display = 'none';
             }
+
+            // GST Taxes Section & Breakdown
+            const taxSection = document.getElementById('taxSection');
+            if (taxSection) {
+                if (calc.tax_amount > 0) {
+                    taxSection.style.display = 'block';
+                    
+                    const taxRateLabel = document.getElementById('taxRateLabel');
+                    if (taxRateLabel) taxRateLabel.textContent = (calc.tax_rate || calc.gst_rate || 18) + '%';
+                    
+                    const summaryTax = document.getElementById('summaryTaxAmount');
+                    if (summaryTax) summaryTax.textContent = '+' + (formatted.tax_amount || '₹0.00');
+
+                    const cgstRateLabel = document.getElementById('cgstRateLabel');
+                    if (cgstRateLabel) cgstRateLabel.textContent = (calc.cgst_rate || (calc.tax_rate ? calc.tax_rate / 2 : 9)) + '%';
+                    
+                    const summaryCgst = document.getElementById('summaryCgstAmount');
+                    if (summaryCgst) summaryCgst.textContent = '+' + (formatted.cgst_amount || formatted.tax_amount || '₹0.00');
+
+                    const sgstRateLabel = document.getElementById('sgstRateLabel');
+                    if (sgstRateLabel) sgstRateLabel.textContent = (calc.sgst_rate || (calc.tax_rate ? calc.tax_rate / 2 : 9)) + '%';
+
+                    const summarySgst = document.getElementById('summarySgstAmount');
+                    if (summarySgst) summarySgst.textContent = '+' + (formatted.sgst_amount || formatted.tax_amount || '₹0.00');
+                } else {
+                    taxSection.style.display = 'none';
+                }
+            }
         }
     }
 
@@ -505,6 +559,11 @@ document.addEventListener('DOMContentLoaded', function() {
             check_in: checkIn,
             check_out: checkOut,
             quantity: quantity
+        });
+
+        (extraServices || []).forEach(s => {
+            const sid = (typeof s === 'object' && s !== null) ? s.id : s;
+            if (sid) params.append('extra_services[]', sid);
         });
 
         fetch(`{{ route('api.coupons.validate') }}?${params.toString()}`, {
@@ -578,6 +637,11 @@ document.addEventListener('DOMContentLoaded', function() {
             check_in: checkIn,
             check_out: checkOut,
             quantity: quantity
+        });
+
+        (extraServices || []).forEach(s => {
+            const sid = (typeof s === 'object' && s !== null) ? s.id : s;
+            if (sid) params.append('extra_services[]', sid);
         });
 
         fetch(`{{ route('api.coupons.validate') }}?${params.toString()}`, {

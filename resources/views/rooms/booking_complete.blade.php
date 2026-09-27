@@ -214,12 +214,47 @@
             </div>
 
             <div class="summary-box">
+                @php
+                    $extraInfo = [];
+                    if (!empty($order->extra_info)) {
+                        $extraInfo = is_array($order->extra_info) ? $order->extra_info : json_decode($order->extra_info, true);
+                    }
+                    $room = $order->room ?? null;
+                    $roomQty = $extraInfo['room_qty'] ?? 1;
+                    $nights = $order->total_nights ?? 1;
+                    $basePrice = $extraInfo['base_price'] ?? ($room->price_per_day ?? 0);
+                    $discountPercent = $extraInfo['discount_percent'] ?? ($room->discount ?? 0);
+                    $roomDiscountAmount = $extraInfo['room_discount_amount'] ?? 0;
+                    $couponCode = $extraInfo['coupon_code'] ?? null;
+                    $couponDiscount = $extraInfo['coupon_discount'] ?? 0;
+                    $totalDiscount = $extraInfo['total_discount'] ?? ($order->discount_amount ?? 0);
+                @endphp
 
-                <div class="summary-grid">
+                <div class="summary-grid mb-3">
+                    <div class="summary-item">
+                        <small>Guest Name</small>
+                        <strong>{{ $order->customer_name }}</strong>
+                    </div>
 
                     <div class="summary-item">
-                        <small>Status</small>
+                        <small>Email & Phone</small>
+                        <strong>{{ $order->email ?? 'N/A' }} <br><span style="font-size:0.85rem; color:#64748b;">{{ $order->phone ?? '' }}</span></strong>
+                    </div>
 
+                    <div class="summary-item">
+                        <small>Room & Hotel</small>
+                        <strong>{{ $room->post_title ?? 'Room Stay' }}</strong>
+                        <div style="font-size:0.8rem; color:#64748b;">{{ $order->hotel->name ?? 'Grand Hotel' }}</div>
+                    </div>
+
+                    <div class="summary-item">
+                        <small>Stay Schedule</small>
+                        <strong>{{ $order->start_date ? \Carbon\Carbon::parse($order->start_date)->format('d M') : '' }} &rarr; {{ $order->end_date ? \Carbon\Carbon::parse($order->end_date)->format('d M Y') : '' }}</strong>
+                        <div style="font-size:0.8rem; color:#64748b;">{{ $nights }} Night(s), {{ $roomQty }} Room(s)</div>
+                    </div>
+
+                    <div class="summary-item">
+                        <small>Payment Status</small>
                         @php $status = $order->payment_status ?? $order->status ?? 'pending'; @endphp
                         <span class="status-badge" id="statusBadge">
                             {{ ucfirst($status) }}
@@ -227,36 +262,38 @@
                     </div>
 
                     <div class="summary-item">
-                        <small>Booking Date</small>
-
-                        <strong>
-                            {{ $order->created_at->format('d M Y') }}
-                        </strong>
-                    </div>
-
-                    @if(!empty($order->payment_method))
-                    <div class="summary-item">
                         <small>Payment Method</small>
-
-                        <strong>
-                            {{ ucfirst($order->payment_method) }}
-                        </strong>
+                        <strong>{{ ucfirst($order->payment_method ?? 'Online') }}</strong>
                     </div>
-                    @endif
-
-                    @if(!empty($order->total_amount))
-                    <div class="summary-item">
-                        <small>Total Amount</small>
-
-                        <div class="amount">
-                            ₹{{ number_format($order->total_amount, 2) }}
-                        </div>
-                    </div>
-                    @endif
-
                 </div>
 
+                @if($totalDiscount > 0)
+                    <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:0.75rem 1rem; margin-bottom:1rem; font-size:0.875rem; color:#065f46;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span><i class="fas fa-gift me-1"></i> <strong>Discounts Applied:</strong></span>
+                            <span>-{{ \App\Helpers\CurrencyHelper::format($totalDiscount) }}</span>
+                        </div>
+                        @if($roomDiscountAmount > 0)
+                            <div style="font-size:0.8rem; margin-top:3px; opacity:0.9;">
+                                &bull; Festival/Room Offer ({{ $discountPercent }}% off): -{{ \App\Helpers\CurrencyHelper::format($roomDiscountAmount) }}
+                            </div>
+                        @endif
+                        @if($couponDiscount > 0)
+                            <div style="font-size:0.8rem; margin-top:2px; opacity:0.9;">
+                                &bull; Coupon ({{ $couponCode }}): -{{ \App\Helpers\CurrencyHelper::format($couponDiscount) }}
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
+                    <span style="font-weight:600; color:#475569;">Total Amount:</span>
+                    <div class="amount" style="font-size:1.4rem;">
+                        {{ \App\Helpers\CurrencyHelper::format($order->total_amount) }}
+                    </div>
+                </div>
             </div>
+
 
             <form method="POST"
                       action="{{ route('payments.checkout', $order->id) }}"

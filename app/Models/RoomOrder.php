@@ -58,6 +58,28 @@ class RoomOrder extends Model
         'ip_address',
     ];
 
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'paid_at' => 'datetime',
+        'sub_total' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+    ];
+
+    public function getExtraInfoAttribute()
+    {
+        if (!empty($this->attributes['payment_response'])) {
+            $decoded = json_decode($this->attributes['payment_response'], true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        return [];
+    }
+
+
     /*
     |--------------------------------------------------------------------------
     | Relationships

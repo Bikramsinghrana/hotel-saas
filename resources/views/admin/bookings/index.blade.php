@@ -83,9 +83,8 @@
                                             <li><button class="dropdown-item row-action" data-action="mark-paid" data-url="{{ route('admin.bookings.mark-paid', $b->id) }}">Mark as paid</button></li>
                                         @endif
                                         <li><button class="dropdown-item row-action" data-action="resend-email" data-url="{{ route('admin.bookings.resend-email', $b->id) }}">Resend confirmation</button></li>
-                                        @if($b->invoice)
-                                            <li><a class="dropdown-item" href="{{ route('admin.payments.invoice.download', $b->invoice->id) }}">Download invoice</a></li>
-                                        @endif
+                                        <li><a class="dropdown-item" href="{{ route('admin.bookings.invoice.download', $b->id) }}"><i class="fas fa-file-pdf text-danger me-1"></i> Download Invoice</a></li>
+                                        <li><a class="dropdown-item" target="_blank" href="{{ route('admin.bookings.invoice.preview', $b->id) }}"><i class="fas fa-print text-dark me-1"></i> Print Invoice</a></li>
                                         <li>
                                             <form class="d-inline" method="POST" action="{{ route('admin.bookings.destroy', $b->id) }}" onsubmit="return false;">
                                                 @csrf

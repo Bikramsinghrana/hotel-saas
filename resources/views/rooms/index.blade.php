@@ -561,14 +561,16 @@
     <script src="{{ asset('assets/common/js/booking.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            BookingSystem.initBooking({
-                currencySymbol: '{{ \App\Helpers\CurrencyHelper::format(0, null)[0] }}'
-            });
-
             const checkIn = '{{ request('check_in', now()->format('Y-m-d')) }}';
             const checkOut = '{{ request('check_out', now()->addDay()->format('Y-m-d')) }}';
-            const nights = Math.max(1, (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-            BookingSystem.state.nights = nights;
+            const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)));
+
+            BookingSystem.initBooking({
+                currencySymbol: '{{ \App\Helpers\CurrencyHelper::format(0, null)[0] ?? "₹" }}',
+                checkIn: checkIn,
+                checkOut: checkOut,
+                nights: nights
+            });
         });
 
         function handleQtyChange(el) {
@@ -582,10 +584,32 @@
         }
 
         async function applyCoupon() {
-            const code = document.getElementById('coupon-code').value;
+            const input = document.getElementById('coupon-code');
+            const code = input ? input.value : '';
             const msgEl = document.getElementById('coupon-message');
+            msgEl.innerHTML = '<span class="spinner-border spinner-border-sm text-primary" role="status"></span> Validating...';
             const res = await BookingSystem.applyCoupon(code);
-            msgEl.innerHTML = `<span class="${res.success ? 'text-success' : 'text-danger'}">${res.message}</span>`;
+            if (res.success) {
+                msgEl.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded bg-success-subtle text-success mt-2">
+                        <span class="fw-bold small"><i class="fas fa-check-circle me-1"></i> ${res.message}</span>
+                        <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold" onclick="removeCouponFromUI()">Remove</button>
+                    </div>
+                `;
+            } else {
+                msgEl.innerHTML = `<span class="text-danger small"><i class="fas fa-exclamation-circle me-1"></i> ${res.message}</span>`;
+            }
+        }
+
+        function removeCouponFromUI() {
+            BookingSystem.removeCoupon();
+            const input = document.getElementById('coupon-code');
+            if (input) input.value = '';
+            const msgEl = document.getElementById('coupon-message');
+            if (msgEl) {
+                msgEl.innerHTML = '<span class="text-info small"><i class="fas fa-info-circle me-1"></i> Coupon removed.</span>';
+                setTimeout(() => { if (msgEl) msgEl.innerHTML = ''; }, 2500);
+            }
         }
     </script>
 @endpush

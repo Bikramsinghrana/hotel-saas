@@ -43,8 +43,15 @@
     </a>
 </li>
 <li>
+    <a href="{{ route('admin.options.index') }}" class="{{ request()->routeIs('admin.options.*') ? 'active' : '' }}">
+        <i class="fas fa-cogs"></i>
+        <span>Dynamic Options</span>
+    </a>
+</li>
+<li>
     <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
         <i class="fas fa-sliders-h"></i>
         <span>Active Theme Setup</span>
     </a>
 </li>
+

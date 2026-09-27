@@ -59,9 +59,17 @@
 
 @canAction('manage roles')
 <li>
+    <a href="{{ route('admin.options.index') }}" class="{{ request()->routeIs('admin.options.*') ? 'active' : '' }}">
+        <i class="fas fa-cogs"></i>
+        <span>Dynamic Options</span>
+        <span class="badge bg-primary-subtle text-primary ms-auto" style="font-size: 0.65rem;">Config</span>
+    </a>
+</li>
+<li>
     <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.roles.*') ? 'active' : '' }}">
         <i class="fas fa-sliders-h"></i>
-        <span>Theme & Settings</span>
+        <span>Theme & Layouts</span>
     </a>
 </li>
 @endcanAction
+

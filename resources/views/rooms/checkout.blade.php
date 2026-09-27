@@ -23,12 +23,13 @@
     position: relative;
 }
 .summary-box {
-    background: #f8fafc;
+    background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 1rem;
+    border-radius: 1.25rem;
     padding: 1.75rem;
     position: sticky;
     top: 2rem;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
 }
 .summary-row {
     display: flex;
@@ -49,8 +50,18 @@
     font-size: 1.35rem;
     color: #0f172a;
 }
-.form-floating label {
-    color: #64748b;
+.savings-callout {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #a7f3d0;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #065f46;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
 }
 .payment-option-card {
     border: 2px solid #e2e8f0;
@@ -82,6 +93,23 @@
     transform: translateY(-1px);
     box-shadow: 0 14px 25px rgba(16, 185, 129, 0.35);
 }
+.user-status-pill {
+    font-size: 0.825rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+.festival-offer-badge {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
 </style>
 @endpush
 
@@ -93,7 +121,7 @@
             <i class="fas fa-lock me-1"></i> 256-Bit SSL Encrypted Checkout
         </span>
         <h1 class="h2 fw-bold font-serif mb-2">Finalize Your Reservation</h1>
-        <p class="text-white-50 mb-0">Please review your stay details and provide guest information to confirm.</p>
+        <p class="text-white-50 mb-0">Please review your stay details, apply any discounts or promo codes, and provide guest information.</p>
     </div>
 </section>
 
@@ -106,16 +134,52 @@
     @endif
 
     <div class="row g-4 g-lg-5">
-        <!-- Guest Details & Form -->
+        <!-- Guest Details & Booking Form -->
         <div class="col-lg-7">
             <div class="checkout-card p-4 p-md-5">
+
+                <!-- Auth Status Banner -->
+                @auth
+                    <div class="d-flex align-items-center justify-content-between p-3 bg-light border border-success-subtle rounded-3 mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">Logged in as {{ auth()->user()->name }}</div>
+                                <small class="text-muted">{{ auth()->user()->email }} • Contact details auto-filled below</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
+                            <i class="fas fa-check-circle me-1"></i> Verified
+                        </span>
+                    </div>
+                @else
+                    <div class="d-flex align-items-center justify-content-between p-3 bg-light border border-secondary-subtle rounded-3 mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                <i class="fas fa-user-clock"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">Guest Checkout</div>
+                                <small class="text-muted">No account needed. Provide your details below for instant confirmation.</small>
+                            </div>
+                        </div>
+                        @if(Route::has('login'))
+                            <a href="{{ route('login') }}?redirect={{ urlencode(url()->current()) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                <i class="fas fa-sign-in-alt me-1"></i> Log In
+                            </a>
+                        @endif
+                    </div>
+                @endauth
+
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 38px; height: 38px;">
                         <span class="fw-bold">1</span>
                     </div>
                     <div>
                         <h4 class="fw-bold text-dark font-serif mb-0">Guest Information</h4>
-                        <small class="text-muted">Booking confirmation will be sent to this email</small>
+                        <small class="text-muted">Booking voucher & invoice will be issued for this guest</small>
                     </div>
                 </div>
 
@@ -123,13 +187,15 @@
                     @csrf
                     <input type="hidden" name="check_in" value="{{ $checkIn }}">
                     <input type="hidden" name="check_out" value="{{ $checkOut }}">
+                    <input type="hidden" name="quantity" id="formQuantity" value="{{ $quantity ?? 1 }}">
+                    <input type="hidden" name="coupon_code" id="formCouponCode" value="{{ $calc['coupon_code'] ?? $couponCode ?? '' }}">
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-12">
                             <label class="form-label small fw-semibold text-dark">Primary Guest Full Name <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light"><i class="fas fa-user text-muted"></i></span>
-                                <input type="text" name="customer_name" class="form-control" placeholder="e.g. Alexander Hamilton" required value="{{ old('customer_name', auth()->user()->name ?? '') }}">
+                                <input type="text" name="customer_name" class="form-control" placeholder="e.g. John Doe" required value="{{ old('customer_name', auth()->user()->name ?? '') }}">
                             </div>
                         </div>
 
@@ -137,7 +203,7 @@
                             <label class="form-label small fw-semibold text-dark">Email Address <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light"><i class="fas fa-envelope text-muted"></i></span>
-                                <input type="email" name="email" class="form-control" placeholder="alex@domain.com" required value="{{ old('email', auth()->user()->email ?? '') }}">
+                                <input type="email" name="email" class="form-control" placeholder="john@example.com" required value="{{ old('email', auth()->user()->email ?? '') }}">
                             </div>
                         </div>
 
@@ -145,14 +211,14 @@
                             <label class="form-label small fw-semibold text-dark">Phone Number <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light"><i class="fas fa-phone text-muted"></i></span>
-                                <input type="tel" name="phone" class="form-control" placeholder="+1 (555) 234-5678" required value="{{ old('phone', auth()->user()->phone ?? '') }}">
+                                <input type="tel" name="phone" class="form-control" placeholder="+1 (555) 019-2834" required value="{{ old('phone', auth()->user()->phone ?? auth()->user()->details?->phone ?? '') }}">
                             </div>
                         </div>
 
                         <div class="col-12">
                             <label class="form-label small fw-semibold text-dark">Special Requests (Optional)</label>
-                            <textarea name="notes" class="form-control" rows="3" placeholder="Early check-in preference, dietary requirements, high floor room, etc.">{{ old('notes') }}</textarea>
-                            <small class="text-muted">Special requests are subject to availability upon arrival.</small>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Early check-in preference, quiet room, high floor, dietary requests, etc.">{{ old('notes') }}</textarea>
+                            <small class="text-muted">Special requests are subject to availability upon check-in.</small>
                         </div>
                     </div>
 
@@ -165,7 +231,7 @@
                         </div>
                         <div>
                             <h4 class="fw-bold text-dark font-serif mb-0">Payment Method</h4>
-                            <small class="text-muted">Select how you prefer to settle your reservation</small>
+                            <small class="text-muted">Choose your preferred settlement method</small>
                         </div>
                     </div>
 
@@ -197,35 +263,45 @@
                     <div class="p-3 bg-light rounded-3 mb-4 border d-flex align-items-center gap-3">
                         <i class="fas fa-shield-check fa-2x text-success"></i>
                         <div class="small text-muted">
-                            <strong>Guaranteed Booking:</strong> Your credit card details and personal information are strictly encrypted and processed under PCI-DSS compliance.
+                            <strong>Guaranteed Safe Booking:</strong> Your transaction and personal details are encrypted and processed securely.
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-book-now w-100">
+                    <button type="submit" id="btnSubmitBooking" class="btn btn-book-now w-100">
                         <i class="fas fa-check-circle me-2"></i> Confirm & Complete Booking
                     </button>
                 </form>
             </div>
         </div>
 
-        <!-- Order Summary Card -->
+        <!-- Order Summary Card / View Chart -->
         <div class="col-lg-5">
-            <div class="summary-box shadow-sm">
-                <h4 class="fw-bold text-dark font-serif mb-3 pb-2 border-bottom">Booking Summary</h4>
+            <div class="summary-box">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <h4 class="fw-bold text-dark font-serif mb-0">Booking Summary</h4>
+                    <span class="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">View Chart</span>
+                </div>
                 
-                <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
                     @php
                         $roomImg = $room->media->first()?->path ?? 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&auto=format&fit=crop';
                     @endphp
                     <img src="{{ $roomImg }}" alt="{{ $room->post_title }}" class="rounded-3 shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
                     <div>
                         <h6 class="fw-bold text-dark mb-1">{{ $room->post_title }}</h6>
-                        <span class="badge bg-success-subtle text-success small">{{ $room->roomType->room_type ?? 'Luxury Suite' }}</span>
+                        <div class="d-flex flex-wrap gap-1 align-items-center">
+                            <span class="badge bg-success-subtle text-success small">{{ $room->roomType->room_type ?? 'Luxury Suite' }}</span>
+                            @if($calc['discount_percent'] > 0)
+                                <span class="festival-offer-badge">
+                                    <i class="fas fa-gift"></i> {{ $calc['discount_percent'] }}% Festival Offer
+                                </span>
+                            @endif
+                        </div>
                         <p class="small text-muted mb-0 mt-1"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ optional($room->hotel)->name ?? ($tenant->name ?? 'Our Grand Hotel') }}</p>
                     </div>
                 </div>
 
-                <div class="bg-white p-3 rounded-3 border mb-3">
+                <div class="bg-light p-3 rounded-3 border mb-3">
                     <div class="row text-center g-2">
                         <div class="col-6 border-end">
                             <span class="text-muted small d-block">Check-In</span>
@@ -238,40 +314,89 @@
                     </div>
                 </div>
 
+                <!-- Stay Details -->
                 <div class="summary-row">
                     <span>Stay Duration</span>
-                    <strong class="text-dark">{{ $calc['nights'] }} Night(s)</strong>
+                    <strong class="text-dark" id="summaryNights">{{ $calc['nights'] }} Night(s)</strong>
                 </div>
                 <div class="summary-row">
                     <span>Number of Rooms</span>
-                    <strong class="text-dark">{{ $calc['quantity'] }} Room(s)</strong>
+                    <strong class="text-dark" id="summaryQuantity">{{ $calc['quantity'] }} Room(s)</strong>
                 </div>
                 <div class="summary-row">
-                    <span>Rate per Night</span>
-                    <span>{{ \App\Helpers\CurrencyHelper::format($calc['discounted_price']) }}</span>
+                    <span>Base Rate per Night</span>
+                    <span id="summaryBasePrice">{{ \App\Helpers\CurrencyHelper::format($calc['base_price']) }}</span>
                 </div>
+
+                <!-- Room / Festival Discount -->
+                @if($calc['discount_percent'] > 0)
+                    <div class="summary-row text-success fw-semibold" id="roomDiscountRow">
+                        <span><i class="fas fa-percent me-1"></i> Festival / Room Offer ({{ $calc['discount_percent'] }}% Off)</span>
+                        <span id="roomDiscountVal">-{{ \App\Helpers\CurrencyHelper::format($calc['room_discount_amount']) }}</span>
+                    </div>
+                @else
+                    <div class="summary-row text-success fw-semibold" id="roomDiscountRow" style="display: none;">
+                        <span><i class="fas fa-percent me-1"></i> Festival / Room Offer</span>
+                        <span id="roomDiscountVal">-₹0.00</span>
+                    </div>
+                @endif
+
                 <div class="summary-row border-top pt-2 mt-2">
                     <span>Room Subtotal</span>
-                    <span class="fw-semibold text-dark">{{ \App\Helpers\CurrencyHelper::format($calc['room_total']) }}</span>
+                    <span class="fw-semibold text-dark" id="summaryRoomTotal">{{ \App\Helpers\CurrencyHelper::format($calc['room_total']) }}</span>
                 </div>
 
+                <!-- Extra Services -->
                 @if($calc['extra_total'] > 0)
-                    <div class="summary-row">
+                    <div class="summary-row" id="extraServicesRow">
                         <span>Extra Services</span>
-                        <span class="text-dark">{{ \App\Helpers\CurrencyHelper::format($calc['extra_total']) }}</span>
+                        <span class="text-dark" id="summaryExtraTotal">{{ \App\Helpers\CurrencyHelper::format($calc['extra_total']) }}</span>
+                    </div>
+                @else
+                    <div class="summary-row" id="extraServicesRow" style="display: none;">
+                        <span>Extra Services</span>
+                        <span class="text-dark" id="summaryExtraTotal">₹0.00</span>
                     </div>
                 @endif
 
-                @if($calc['coupon_discount'] > 0)
-                    <div class="summary-row text-success fw-bold">
-                        <span><i class="fas fa-tag me-1"></i> Coupon Discount</span>
-                        <span>-{{ \App\Helpers\CurrencyHelper::format($calc['coupon_discount']) }}</span>
-                    </div>
-                @endif
+                <!-- Coupon Discount -->
+                <div class="summary-row text-success fw-bold" id="couponDiscountRow" style="display: {{ $calc['coupon_discount'] > 0 ? 'flex' : 'none' }};">
+                    <span id="couponDiscountLabel"><i class="fas fa-tag me-1"></i> Coupon ({{ $calc['coupon_code'] ?? '' }})</span>
+                    <span id="summaryCouponDiscount">-{{ \App\Helpers\CurrencyHelper::format($calc['coupon_discount']) }}</span>
+                </div>
 
+                <!-- Total Savings Badge -->
+                <div class="savings-callout" id="savingsCallout" style="display: {{ $calc['total_discount'] > 0 ? 'flex' : 'none' }};">
+                    <i class="fas fa-sparkles text-success"></i>
+                    <span>Total Discount Saved: <strong id="totalDiscountVal">{{ \App\Helpers\CurrencyHelper::format($calc['total_discount']) }}</strong></span>
+                </div>
+
+                <!-- Total Amount Payable -->
                 <div class="summary-total">
                     <span>Total Amount</span>
-                    <span class="text-success">{{ \App\Helpers\CurrencyHelper::format($calc['total_payable']) }}</span>
+                    <span class="text-success" id="summaryTotalPayable">{{ \App\Helpers\CurrencyHelper::format($calc['total_payable']) }}</span>
+                </div>
+
+                <!-- Interactive Promo Code Section -->
+                <div class="mt-4 pt-3 border-top">
+                    <label class="form-label small fw-bold text-dark mb-2">
+                        <i class="fas fa-tags text-primary me-1"></i> Promo / Coupon Code
+                    </label>
+                    <div class="input-group">
+                        <input type="text" id="couponInput" class="form-control text-uppercase font-monospace" placeholder="e.g. SUMMER25" value="{{ $effectiveCoupon ?? $calc['coupon_code'] ?? '' }}">
+                        <button class="btn btn-primary fw-semibold px-3" type="button" id="btnApplyCoupon">
+                            <span id="applyCouponText">Apply</span>
+                            <span id="applyCouponSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        </button>
+                    </div>
+                    <div id="couponMessage" class="mt-2 small" style="display: {{ !empty($effectiveCoupon ?? $calc['coupon_code']) && $calc['coupon_discount'] > 0 ? 'block' : 'none' }};">
+                        @if(!empty($effectiveCoupon ?? $calc['coupon_code']) && $calc['coupon_discount'] > 0)
+                            <div class="d-flex align-items-center justify-content-between text-success fw-semibold bg-success-subtle p-2 rounded">
+                                <span><i class="fas fa-check-circle me-1"></i> Applied: <strong>{{ $effectiveCoupon ?? $calc['coupon_code'] }}</strong></span>
+                                <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold" id="btnRemoveCoupon">Remove</button>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="mt-4 pt-3 border-top text-center text-muted small">
@@ -286,4 +411,227 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const couponInput = document.getElementById('couponInput');
+    const btnApplyCoupon = document.getElementById('btnApplyCoupon');
+    const btnRemoveCoupon = document.getElementById('btnRemoveCoupon');
+    const couponMessage = document.getElementById('couponMessage');
+    const formCouponCode = document.getElementById('formCouponCode');
+    const applyCouponText = document.getElementById('applyCouponText');
+    const applyCouponSpinner = document.getElementById('applyCouponSpinner');
+
+    const roomId = {{ $room->id }};
+    const hotelId = {{ $room->hotel_id ?? 'null' }};
+    const checkIn = "{{ $checkIn }}";
+    const checkOut = "{{ $checkOut }}";
+    const quantity = {{ $quantity ?? 1 }};
+    const extraServices = @json($pending['rooms'][0]['extraServices'] ?? []);
+
+    function setCouponLoading(loading) {
+        if (loading) {
+            btnApplyCoupon.disabled = true;
+            applyCouponText.classList.add('d-none');
+            applyCouponSpinner.classList.remove('d-none');
+        } else {
+            btnApplyCoupon.disabled = false;
+            applyCouponText.classList.remove('d-none');
+            applyCouponSpinner.classList.add('d-none');
+        }
+    }
+
+    function updateViewChart(calc, formatted, couponCode) {
+        // Update Form hidden input
+        if (formCouponCode) {
+            formCouponCode.value = couponCode || '';
+        }
+
+        // Update Summary Breakdown
+        if (formatted) {
+            document.getElementById('summaryBasePrice').textContent = formatted.base_price;
+            document.getElementById('summaryRoomTotal').textContent = formatted.room_total;
+            document.getElementById('summaryTotalPayable').textContent = formatted.total_payable;
+
+            // Room / Festival Discount
+            const roomDiscountRow = document.getElementById('roomDiscountRow');
+            if (calc.room_discount_amount > 0) {
+                roomDiscountRow.style.display = 'flex';
+                document.getElementById('roomDiscountVal').textContent = '-' + formatted.room_discount_amount;
+            } else {
+                roomDiscountRow.style.display = 'none';
+            }
+
+            // Coupon Discount
+            const couponRow = document.getElementById('couponDiscountRow');
+            if (calc.coupon_discount > 0 && (calc.coupon_code || couponCode)) {
+                couponRow.style.display = 'flex';
+                document.getElementById('couponDiscountLabel').innerHTML = '<i class="fas fa-tag me-1"></i> Coupon (' + (calc.coupon_code || couponCode) + ')';
+                document.getElementById('summaryCouponDiscount').textContent = '-' + formatted.coupon_discount;
+            } else {
+                couponRow.style.display = 'none';
+            }
+
+            // Total Savings Callout
+            const savingsCallout = document.getElementById('savingsCallout');
+            if (calc.total_discount > 0) {
+                savingsCallout.style.display = 'flex';
+                document.getElementById('totalDiscountVal').textContent = formatted.total_discount;
+            } else {
+                savingsCallout.style.display = 'none';
+            }
+        }
+    }
+
+    function applyCouponCode(code) {
+        code = (code || '').trim();
+        if (!code) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'warning',
+                title: 'Please enter a coupon code',
+                showConfirmButton: false,
+                timer: 2500
+            });
+            return;
+        }
+
+        setCouponLoading(true);
+
+        const params = new URLSearchParams({
+            code: code,
+            room_id: roomId,
+            hotel_id: hotelId || '',
+            check_in: checkIn,
+            check_out: checkOut,
+            quantity: quantity
+        });
+
+        fetch(`{{ route('api.coupons.validate') }}?${params.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(({ status, body }) => {
+            setCouponLoading(false);
+            if (body.success && body.coupon) {
+                couponInput.value = body.coupon.code;
+                couponMessage.style.display = 'block';
+                couponMessage.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between text-success fw-semibold bg-success-subtle p-2 rounded">
+                        <span><i class="fas fa-check-circle me-1"></i> Applied: <strong>${body.coupon.code}</strong></span>
+                        <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold" id="btnRemoveCouponDynamic">Remove</button>
+                    </div>
+                `;
+
+                // Bind dynamic remove button
+                document.getElementById('btnRemoveCouponDynamic')?.addEventListener('click', removeCouponCode);
+
+                updateViewChart(body.calc, body.formatted, body.coupon.code);
+
+                // Update URL query state to reflect coupon code
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('coupon', body.coupon.code);
+                window.history.replaceState({}, '', newUrl.toString());
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: body.message || 'Coupon applied successfully!',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: body.message || 'Invalid coupon code',
+                    showConfirmButton: false,
+                    timer: 3500
+                });
+            }
+        })
+        .catch(err => {
+            setCouponLoading(false);
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Failed to validate coupon. Please try again.',
+                showConfirmButton: false,
+                timer: 3000
+            });
+        });
+    }
+
+    function removeCouponCode() {
+        setCouponLoading(true);
+
+        const params = new URLSearchParams({
+            code: '__NONE__',
+            room_id: roomId,
+            hotel_id: hotelId || '',
+            check_in: checkIn,
+            check_out: checkOut,
+            quantity: quantity
+        });
+
+        fetch(`{{ route('api.coupons.validate') }}?${params.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(body => {
+            setCouponLoading(false);
+            couponInput.value = '';
+            if (formCouponCode) formCouponCode.value = '';
+            couponMessage.style.display = 'none';
+            couponMessage.innerHTML = '';
+
+            if (body.calc && body.formatted) {
+                updateViewChart(body.calc, body.formatted, '');
+            }
+
+            // Remove coupon param from browser URL seamlessly
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('coupon');
+            window.history.replaceState({}, '', newUrl.toString());
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: 'Coupon removed',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        })
+        .catch(err => {
+            setCouponLoading(false);
+            couponInput.value = '';
+            if (formCouponCode) formCouponCode.value = '';
+            couponMessage.style.display = 'none';
+        });
+    }
+
+    btnApplyCoupon?.addEventListener('click', function() {
+        applyCouponCode(couponInput.value);
+    });
+
+    couponInput?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyCouponCode(couponInput.value);
+        }
+    });
+
+    btnRemoveCoupon?.addEventListener('click', removeCouponCode);
+});
+</script>
 @endpush

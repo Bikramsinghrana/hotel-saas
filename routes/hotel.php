@@ -44,7 +44,18 @@ Route::controller(SettingController::class)->prefix('settings')->name('settings.
     Route::post('theme/activate', 'activateTheme')->name('theme.activate');
 });
 
+// Dynamic Options & System Configuration Management
+Route::controller(App\Http\Controllers\Admin\OptionController::class)->prefix('options')->name('options.')->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('batch-update', 'batchUpdate')->name('batch-update');
+    Route::post('update-single', 'updateSingle')->name('update-single');
+    Route::post('store', 'store')->name('store');
+    Route::delete('{id}', 'destroy')->name('destroy');
+    Route::post('{id}/toggle', 'toggleStatus')->name('toggle');
+});
+
 Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
 Route::get('guests', [GuestController::class, 'index'])->name('guests.index');
 
 // Hotel Wizard routes
@@ -90,7 +101,10 @@ Route::get('payments/invoice/{invoiceId}/download', [App\Http\Controllers\Admin\
 
 // Admin bookings
 Route::resource('bookings', App\Http\Controllers\Admin\BookingController::class);
+Route::get('bookings/{id}/invoice', [App\Http\Controllers\Admin\BookingController::class, 'downloadInvoice'])->name('bookings.invoice.download');
+Route::get('bookings/{id}/invoice/preview', [App\Http\Controllers\Admin\BookingController::class, 'previewInvoice'])->name('bookings.invoice.preview');
 Route::post('bookings/bulk-delete', [App\Http\Controllers\Admin\BookingController::class, 'bulkDelete'])->name('bookings.bulk-delete');
 Route::post('bookings/import', [App\Http\Controllers\Admin\BookingController::class, 'importCsv'])->name('bookings.import');
 Route::post('bookings/{id}/mark-paid', [App\Http\Controllers\Admin\BookingController::class, 'markPaid'])->name('bookings.mark-paid');
 Route::post('bookings/{id}/resend-email', [App\Http\Controllers\Admin\BookingController::class, 'resendEmail'])->name('bookings.resend-email');
+

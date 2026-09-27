@@ -41,7 +41,7 @@ Route::controller(App\Http\Controllers\RoomController::class)->group(function ()
     Route::post('/rooms/{id}/book', 'book')->name('rooms.book');
     Route::post('/rooms/{id}/book-ajax', 'bookAjax')->name('rooms.book.ajax');
     Route::get('/rooms/{order}/complete', 'bookingComplete')->name('rooms.booking.complete');
-    Route::get('/api/coupons/validate', 'validateCoupon')->name('api.coupons.validate');
+    Route::match(['get', 'post'], '/api/coupons/validate', 'validateCoupon')->name('api.coupons.validate');
 });
 
 // Authentication routes

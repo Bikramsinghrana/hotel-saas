@@ -13,7 +13,12 @@ class Invoice extends Model
         'tenant_id','room_order_id','payment_id','invoice_number','amount','tax_amount','total_amount','pdf_path','issued_at'
     ];
 
-    protected $dates = ['issued_at'];
+    protected $casts = [
+        'issued_at' => 'datetime',
+        'amount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+    ];
 
     public function order()
     {

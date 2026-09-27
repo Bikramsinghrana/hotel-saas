@@ -13,7 +13,10 @@ const BookingSystem = {
     state: {
         rooms: [], // { id, name, price, discount, quantity, extraServices: [] }
         coupon: null,
+        checkIn: '',
+        checkOut: '',
         nights: 1,
+        hotelId: null,
         taxPercent: 0,
     },
 
@@ -22,7 +25,12 @@ const BookingSystem = {
      */
     initBooking(config = {}) {
         this.config = { ...this.config, ...config };
-        console.log('Booking System Initialized');
+        if (config.checkIn) this.state.checkIn = config.checkIn;
+        if (config.checkOut) this.state.checkOut = config.checkOut;
+        if (config.nights) this.state.nights = parseInt(config.nights) || 1;
+        if (config.hotelId) this.state.hotelId = config.hotelId;
+
+        console.log('Booking System Initialized with stay:', this.state.checkIn, 'to', this.state.checkOut, '(', this.state.nights, 'nights)');
 
         // Initial render if elements exist
         this.renderBookingSummary();
@@ -84,42 +92,77 @@ const BookingSystem = {
      * Apply coupon code via AJAX
      */
     async applyCoupon(code) {
-        if (!code) return;
+        code = (code || '').trim();
+        if (!code) {
+            return { success: false, message: 'Please enter a coupon code.' };
+        }
 
         try {
-            const response = await fetch(`/api/coupons/validate?code=${code}`);
+            const totals = this.calculateBookingTotal();
+            const params = new URLSearchParams({
+                code: code,
+                check_in: this.state.checkIn || '',
+                hotel_id: this.state.hotelId || '',
+                amount: totals.subtotal || 0
+            });
+
+            if (this.state.rooms.length > 0) {
+                params.set('room_id', this.state.rooms[0].id);
+                params.set('quantity', this.state.rooms[0].quantity);
+            }
+
+            const response = await fetch(`/api/coupons/validate?${params.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
             const data = await response.json();
 
-            if (data.success) {
+            if (data.success && data.coupon) {
                 this.state.coupon = data.coupon;
                 this.renderBookingSummary();
-                return { success: true, message: 'Coupon applied!' };
+                return { success: true, message: `Coupon "${data.coupon.code}" applied!` };
             } else {
                 this.state.coupon = null;
                 this.renderBookingSummary();
-                return { success: false, message: data.message || 'Invalid coupon' };
+                return { success: false, message: data.message || 'Invalid or inapplicable coupon code' };
             }
         } catch (error) {
             console.error('Coupon Error:', error);
-            return { success: false, message: 'Server error' };
+            return { success: false, message: 'Server error while validating coupon.' };
         }
+    },
+
+    /**
+     * Remove applied coupon
+     */
+    removeCoupon() {
+        this.state.coupon = null;
+        this.renderBookingSummary();
+        return { success: true, message: 'Coupon removed.' };
     },
 
     /**
      * Calculate all totals
      */
     calculateBookingTotal() {
+        let roomOriginalTotal = 0;
+        let roomDiscountTotal = 0;
         let roomSubtotal = 0;
         let extraSubtotal = 0;
 
         this.state.rooms.forEach(room => {
-            const price = parseFloat(room.price) || 0;
-            const discount = parseFloat(room.discount) || 0;
-            const discountedPrice = price - (price * (discount / 100));
-            
+            const basePrice = parseFloat(room.price) || 0;
+            const discountPercent = parseFloat(room.discount || 0);
+            const discountAmountPerNight = basePrice * (discountPercent / 100);
+            const discountedPrice = Math.max(0, basePrice - discountAmountPerNight);
+
+            roomOriginalTotal += basePrice * room.quantity * this.state.nights;
+            roomDiscountTotal += discountAmountPerNight * room.quantity * this.state.nights;
             roomSubtotal += discountedPrice * room.quantity * this.state.nights;
 
-            room.extraServices.forEach(service => {
+            (room.extraServices || []).forEach(service => {
                 extraSubtotal += (parseFloat(service.price) || 0) * room.quantity;
             });
         });
@@ -129,19 +172,23 @@ const BookingSystem = {
 
         if (this.state.coupon) {
             if (this.state.coupon.discount_type === 'percentage') {
-                couponDiscount = subtotal * (this.state.coupon.discount_value / 100);
+                couponDiscount = subtotal * (parseFloat(this.state.coupon.discount_value) / 100);
             } else {
-                couponDiscount = parseFloat(this.state.coupon.discount_value) || 0;
+                couponDiscount = Math.min(subtotal, parseFloat(this.state.coupon.discount_value) || 0);
             }
         }
 
         const total = Math.max(0, subtotal - couponDiscount);
+        const totalDiscount = roomDiscountTotal + couponDiscount;
 
         return {
+            roomOriginalTotal,
+            roomDiscountTotal,
             roomSubtotal,
             extraSubtotal,
             subtotal,
             couponDiscount,
+            totalDiscount,
             total,
             itemCount: this.state.rooms.reduce((acc, r) => acc + (parseInt(r.quantity) || 0), 0)
         };
@@ -164,6 +211,8 @@ const BookingSystem = {
     renderBookingSummary() {
         const summaryEl = document.getElementById('booking-summary');
         const formSection = document.getElementById('booking-form-section');
+        const couponInput = document.getElementById('coupon-code');
+        const couponMsgEl = document.getElementById('coupon-message');
 
         if (!summaryEl) return;
 
@@ -177,37 +226,90 @@ const BookingSystem = {
 
         formSection?.classList.remove('d-none');
 
-        let html = '<div class="summary-items">';
+        // Update coupon message box in sidebar
+        if (couponMsgEl) {
+            if (this.state.coupon) {
+                couponMsgEl.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded bg-success-subtle text-success mt-2">
+                        <span class="fw-bold small"><i class="fas fa-check-circle me-1"></i> ${this.state.coupon.code}</span>
+                        <button type="button" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold" onclick="removeCouponFromUI()">Remove</button>
+                    </div>
+                `;
+                if (couponInput) couponInput.value = this.state.coupon.code;
+            } else {
+                if (!couponMsgEl.dataset.customMsg) {
+                    couponMsgEl.innerHTML = '';
+                }
+            }
+        }
+
+        let html = '<div class="summary-items mb-3">';
 
         this.state.rooms.forEach(room => {
-            const price = parseFloat(room.price) || 0;
-            const discount = parseFloat(room.discount) || 0;
-            const discountedPrice = price - (price * (discount / 100));
+            const basePrice = parseFloat(room.price) || 0;
+            const discount = parseFloat(room.discount || 0);
+            const discountedPrice = basePrice - (basePrice * (discount / 100));
 
             html += `
-                <div class="summary-line">
-                    <span>${room.name} x ${room.quantity}</span>
-                    <span class="fw-bold">${this.formatCurrency(discountedPrice * room.quantity * this.state.nights)}</span>
+                <div class="summary-line py-1 border-bottom d-flex justify-content-between">
+                    <div>
+                        <strong class="text-dark">${room.name}</strong> 
+                        <span class="text-muted">(${room.quantity} room${room.quantity > 1 ? 's' : ''} × ${this.state.nights} night${this.state.nights > 1 ? 's' : ''})</span>
+                    </div>
+                    <span class="fw-bold text-dark">${this.formatCurrency(discountedPrice * room.quantity * this.state.nights)}</span>
                 </div>
             `;
-            room.extraServices.forEach(s => {
+            (room.extraServices || []).forEach(s => {
                 html += `
-                    <div class="summary-line extra-small text-muted ps-2">
-                        <span>+ ${s.name}</span>
+                    <div class="summary-line extra-small text-muted ps-2 py-1 d-flex justify-content-between">
+                        <span>+ ${s.name} (${room.quantity}x)</span>
                         <span>${this.formatCurrency((parseFloat(s.price) || 0) * room.quantity)}</span>
                     </div>
                 `;
             });
         });
 
+        html += '</div>';
+
+        // Breakdown lines
+        html += `
+            <div class="summary-breakdown small text-secondary mb-3">
+                <div class="d-flex justify-content-between py-1">
+                    <span>Stay Duration:</span>
+                    <strong class="text-dark">${this.state.nights} Night(s)</strong>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Subtotal:</span>
+                    <span class="text-dark">${this.formatCurrency(totals.subtotal)}</span>
+                </div>
+        `;
+
+        if (totals.roomDiscountTotal > 0) {
+            html += `
+                <div class="d-flex justify-content-between py-1 text-success fw-semibold">
+                    <span><i class="fas fa-gift me-1"></i> Room Offer:</span>
+                    <span>-${this.formatCurrency(totals.roomDiscountTotal)}</span>
+                </div>
+            `;
+        }
+
+        if (this.state.coupon && totals.couponDiscount > 0) {
+            html += `
+                <div class="d-flex justify-content-between py-1 text-success fw-bold">
+                    <span><i class="fas fa-tag me-1"></i> Coupon (${this.state.coupon.code}):</span>
+                    <span>-${this.formatCurrency(totals.couponDiscount)}</span>
+                </div>
+            `;
+        }
+
         html += `
             </div>
-            <div class="summary-line total">
-                <span>Total Amount</span>
-                <span>${this.formatCurrency(totals.total)}</span>
+            <div class="summary-line total d-flex justify-content-between align-items-center p-3 rounded bg-light border mb-3">
+                <span class="fw-bold text-dark">Total Amount</span>
+                <span class="h4 fw-bold text-success mb-0">${this.formatCurrency(totals.total)}</span>
             </div>
-            <button onclick="BookingSystem.proceedToCheckout()" class="btn-confirm-booking">
-                PROCEED TO CHECKOUT
+            <button type="button" onclick="BookingSystem.proceedToCheckout()" class="btn btn-success w-100 py-2 fw-bold text-uppercase shadow-sm">
+                Proceed to Checkout <i class="fas fa-arrow-right ms-1"></i>
             </button>
         `;
 
@@ -218,11 +320,14 @@ const BookingSystem = {
      * Handle checkout redirect
      */
     proceedToCheckout() {
+        const totals = this.calculateBookingTotal();
         const data = {
             rooms: this.state.rooms,
-            coupon: this.state.coupon?.code,
+            coupon: this.state.coupon?.code || null,
+            check_in: this.state.checkIn,
+            check_out: this.state.checkOut,
             nights: this.state.nights,
-            total: this.calculateBookingTotal().total
+            total: totals.total
         };
 
         const form = document.createElement('form');

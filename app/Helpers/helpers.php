@@ -7,29 +7,35 @@ use Illuminate\Support\Facades\Storage;
 if (! function_exists('tenant')) {
     function tenant(): ?Tenant
     {
-        // Priority 1: session (most reliable after login sets it)
-        if (session()->has('tenant_id')) {
-            return Tenant::with(['theme', 'subTheme'])->find(session('tenant_id'));
-        }
-
-        // Priority 2: authenticated user's tenant_id (handles cases where session wasn't set)
-        if (auth()->check() && auth()->user()->tenant_id) {
-            $t = Tenant::with(['theme', 'subTheme'])->find(auth()->user()->tenant_id);
-            if ($t) {
-                // Backfill the session so subsequent requests are fast
-                session(['tenant_id' => $t->id]);
-                return $t;
+        try {
+            // Priority 1: session (most reliable after login sets it)
+            if (app()->bound('session') && session()->has('tenant_id')) {
+                return Tenant::with(['theme', 'subTheme'])->find(session('tenant_id'));
             }
-        }
 
-        // Priority 3: service container (set by a TenantMiddleware, if present)
-        if (app()->bound('tenant')) {
-            return app('tenant');
+            // Priority 2: authenticated user's tenant_id (handles cases where session wasn't set)
+            if (app()->bound('auth') && auth()->guard()->hasUser() && auth()->user()->tenant_id) {
+                $t = Tenant::with(['theme', 'subTheme'])->find(auth()->user()->tenant_id);
+                if ($t) {
+                    if (app()->bound('session')) {
+                        session(['tenant_id' => $t->id]);
+                    }
+                    return $t;
+                }
+            }
+
+            // Priority 3: service container (set by a TenantMiddleware, if present)
+            if (app()->bound('tenant')) {
+                return app('tenant');
+            }
+        } catch (\Throwable $e) {
+            // Fallback gracefully in non-HTTP/CLI environments
         }
 
         return null;
     }
 }
+
 
 if (! function_exists('isSingleHotel')) {
     function isSingleHotel(): bool
@@ -272,5 +278,66 @@ if (!function_exists('can_manage_subtheme')) {
         return is_super_admin() || can_use_subtheme($subTheme, $tenant);
     }
 }
+
+if (!function_exists('option')) {
+    /**
+     * Get dynamic option value with hierarchical fallback
+     */
+    function option(string $key, $default = null, $tenantId = null, $hotelId = null)
+    {
+        return app(\App\Services\OptionService::class)->get($key, $default, $tenantId, $hotelId);
+    }
+}
+
+if (!function_exists('option_set')) {
+    /**
+     * Set or update dynamic option value
+     */
+    function option_set(string $key, $value, string $group = 'general', $type = null, $tenantId = null, $hotelId = null, array $extra = [])
+    {
+        return app(\App\Services\OptionService::class)->set($key, $value, $group, $type, $tenantId, $hotelId, $extra);
+    }
+}
+
+if (!function_exists('option_group')) {
+    /**
+     * Get all dynamic options in a group
+     */
+    function option_group(string $group, $tenantId = null, $hotelId = null): array
+    {
+        return app(\App\Services\OptionService::class)->getGroup($group, $tenantId, $hotelId);
+    }
+}
+
+if (!function_exists('validate_coupon')) {
+    /**
+     * Helper function to check coupon validity across dates, days of week, time slots, min spend, and limits.
+     *
+     * @param string|\App\Models\Coupon $couponOrCode
+     * @param int|null $hotelId
+     * @param int|null $tenantId
+     * @param string|\Carbon\Carbon|null $date
+     * @param string|\Carbon\Carbon|null $time
+     * @param float $amount
+     * @return array ['success' => bool, 'message' => string, 'coupon' => Coupon|null]
+     */
+    function validate_coupon($couponOrCode, $hotelId = null, $tenantId = null, $date = null, $time = null, $amount = 0): array
+    {
+        return app(\App\Services\CouponService::class)->validate($couponOrCode, $hotelId, $tenantId, $date, $time, $amount);
+    }
+}
+
+if (!function_exists('is_coupon_valid')) {
+    /**
+     * Quick boolean check if a coupon is valid for a given date/time/hotel.
+     */
+    function is_coupon_valid($couponOrCode, $hotelId = null, $tenantId = null, $date = null, $time = null, $amount = 0): bool
+    {
+        $res = validate_coupon($couponOrCode, $hotelId, $tenantId, $date, $time, $amount);
+        return !empty($res['success']);
+    }
+}
+
+
 
 

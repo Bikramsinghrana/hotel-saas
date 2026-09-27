@@ -31,9 +31,75 @@ class BookingController extends Controller
 
     public function show($id)
     {
-        $booking = RoomOrder::with('room','hotel')->findOrFail($id);
-        $invoice = Invoice::where('room_order_id', $booking->id)->first();
+        $booking = RoomOrder::with(['room.roomType', 'room.media', 'hotel.tenant', 'user', 'invoice'])->findOrFail($id);
+        $invoice = $booking->invoice ?? Invoice::where('room_order_id', $booking->id)->first();
         return view('admin.bookings.show', compact('booking','invoice'));
+    }
+
+    /**
+     * Download PDF Invoice for a booking
+     */
+    public function downloadInvoice($id)
+    {
+        $booking = RoomOrder::with(['room.roomType', 'hotel.tenant', 'user'])->findOrFail($id);
+        
+        $invoice = Invoice::where('room_order_id', $booking->id)->first();
+        if (!$invoice) {
+            $invoice = Invoice::create([
+                'tenant_id' => $booking->tenant_id ?? tenant()?->id,
+                'room_order_id' => $booking->id,
+                'payment_id' => null,
+                'invoice_number' => 'INV-' . ($booking->order_number ?: strtoupper(\Illuminate\Support\Str::random(8))),
+                'amount' => $booking->total_amount,
+                'tax_amount' => $booking->tax_amount ?? 0,
+                'total_amount' => $booking->total_amount,
+                'issued_at' => $booking->created_at ?? now(),
+            ]);
+        }
+
+        if ($invoice->pdf_path && Storage::disk('public')->exists($invoice->pdf_path)) {
+            return response()->download(storage_path('app/public/' . $invoice->pdf_path));
+        }
+
+        $order = $booking;
+        $payment = \App\Models\Payment::where('room_order_id', $booking->id)->first();
+
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.template', compact('invoice', 'payment', 'order'));
+            return $pdf->download($invoice->invoice_number . '.pdf');
+        } elseif (class_exists(\PDF::class)) {
+            $pdf = \PDF::loadView('invoices.template', compact('invoice', 'payment', 'order'));
+            return $pdf->download($invoice->invoice_number . '.pdf');
+        }
+
+        return view('invoices.template', compact('invoice', 'payment', 'order'));
+    }
+
+    /**
+     * Preview printable HTML invoice in browser
+     */
+    public function previewInvoice($id)
+    {
+        $booking = RoomOrder::with(['room.roomType', 'hotel.tenant', 'user'])->findOrFail($id);
+        
+        $invoice = Invoice::where('room_order_id', $booking->id)->first();
+        if (!$invoice) {
+            $invoice = Invoice::create([
+                'tenant_id' => $booking->tenant_id ?? tenant()?->id,
+                'room_order_id' => $booking->id,
+                'payment_id' => null,
+                'invoice_number' => 'INV-' . ($booking->order_number ?: strtoupper(\Illuminate\Support\Str::random(8))),
+                'amount' => $booking->total_amount,
+                'tax_amount' => $booking->tax_amount ?? 0,
+                'total_amount' => $booking->total_amount,
+                'issued_at' => $booking->created_at ?? now(),
+            ]);
+        }
+
+        $order = $booking;
+        $payment = \App\Models\Payment::where('room_order_id', $booking->id)->first();
+
+        return view('invoices.template', compact('invoice', 'payment', 'order'));
     }
 
     public function edit($id)

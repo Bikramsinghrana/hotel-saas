@@ -94,22 +94,101 @@ class RoomController extends Controller
     }
 
     /**
-     * AJAX: Validate coupon code
+     * AJAX: Validate coupon code & calculate discounts
      */
     public function validateCoupon(Request $request)
     {
-        $service = new CouponService();
-        $result = $service->validate(
-            $request->code, 
-            $request->hotel_id, 
-            session('tenant_id')
-        );
+        $code = trim((string)$request->get('code'));
+        $roomId = $request->get('room_id');
+        $room = $roomId ? Room::find($roomId) : null;
+
+        $hotelId = $request->get('hotel_id', $room?->hotel_id);
+        $tenantId = $room?->tenant_id ?? session('tenant_id') ?? $request->get('tenant_id');
+
+        $checkIn = $request->get('check_in', now()->format('Y-m-d'));
+        $bookingTime = $request->get('time', now()->format('H:i'));
+
+        // If removing coupon (code is empty or '__NONE__')
+        if (empty($code) || $code === '__NONE__' || strtolower($code) === 'none') {
+            if ($room) {
+                $checkOut = $request->get('check_out', now()->addDay()->format('Y-m-d'));
+                $nights = max(1, \Carbon\Carbon::parse($checkIn)->diffInDays(\Carbon\Carbon::parse($checkOut)));
+                $quantity = max(1, (int)$request->get('quantity', 1));
+                $extraServices = (array)$request->get('extra_services', []);
+
+                $priceService = new PriceCalculationService();
+                $calc = $priceService->calculate($room, $quantity, $nights, $extraServices, null, $checkIn, $bookingTime);
+
+                // Clear pending session coupon
+                $pending = session('pending_booking', []);
+                if (isset($pending['coupon'])) {
+                    unset($pending['coupon']);
+                    session(['pending_booking' => $pending]);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'removed' => true,
+                    'message' => 'Coupon removed successfully.',
+                    'coupon' => null,
+                    'calc' => $calc,
+                    'formatted' => [
+                        'base_price' => CurrencyHelper::format($calc['base_price']),
+                        'room_discount_amount' => CurrencyHelper::format($calc['room_discount_amount']),
+                        'coupon_discount' => CurrencyHelper::format(0),
+                        'total_discount' => CurrencyHelper::format($calc['total_discount']),
+                        'room_total' => CurrencyHelper::format($calc['room_total']),
+                        'extra_total' => CurrencyHelper::format($calc['extra_total']),
+                        'sub_total' => CurrencyHelper::format($calc['sub_total']),
+                        'total_payable' => CurrencyHelper::format($calc['total_payable']),
+                    ]
+                ]);
+            }
+
+            return response()->json(['success' => true, 'removed' => true, 'message' => 'Coupon removed.']);
+        }
+
+        $result = validate_coupon($code, $hotelId, $tenantId, $checkIn, $bookingTime);
+
+        if (!$result['success']) {
+            return response()->json($result, 422);
+        }
+
+        $coupon = $result['coupon'];
+
+        // If room is present, recalculate complete stay totals for instant frontend feedback
+        if ($room) {
+            $checkOut = $request->get('check_out', now()->addDay()->format('Y-m-d'));
+            $nights = max(1, \Carbon\Carbon::parse($checkIn)->diffInDays(\Carbon\Carbon::parse($checkOut)));
+            $quantity = max(1, (int)$request->get('quantity', 1));
+            $extraServices = (array)$request->get('extra_services', []);
+
+            $priceService = new PriceCalculationService();
+            $calc = $priceService->calculate($room, $quantity, $nights, $extraServices, $coupon->code, $checkIn, $bookingTime);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Coupon "' . $coupon->code . '" applied! Discount: ' . ($coupon->discount_type === 'percentage' ? $coupon->discount_value . '%' : CurrencyHelper::format($coupon->discount_value)),
+                'coupon' => $coupon,
+                'calc' => $calc,
+                'formatted' => [
+                    'base_price' => CurrencyHelper::format($calc['base_price']),
+                    'room_discount_amount' => CurrencyHelper::format($calc['room_discount_amount']),
+                    'coupon_discount' => CurrencyHelper::format($calc['coupon_discount']),
+                    'total_discount' => CurrencyHelper::format($calc['total_discount']),
+                    'room_total' => CurrencyHelper::format($calc['room_total']),
+                    'extra_total' => CurrencyHelper::format($calc['extra_total']),
+                    'sub_total' => CurrencyHelper::format($calc['sub_total']),
+                    'total_payable' => CurrencyHelper::format($calc['total_payable']),
+                ]
+            ]);
+        }
 
         return response()->json($result);
     }
 
     /**
-     * Initial checkout step - store selection in session
+     * Initial checkout step - store selection in session and forward query parameters
      */
     public function checkoutInit(Request $request)
     {
@@ -118,17 +197,21 @@ class RoomController extends Controller
 
         session(['pending_booking' => $data]);
 
-        // For now we assume the first room in selection is the main one for the checkout page
-        // (Simplified for single-room type selection as per UI usually)
         $roomId = $data['rooms'][0]['id'] ?? null;
         if (!$roomId) return back()->with('error', 'No room selected.');
 
-        return redirect()->route('rooms.checkout', ['id' => $roomId]);
+        $params = ['id' => $roomId];
+        if (!empty($data['check_in'])) $params['check_in'] = $data['check_in'];
+        if (!empty($data['check_out'])) $params['check_out'] = $data['check_out'];
+        if (!empty($data['rooms'][0]['quantity'])) $params['quantity'] = $data['rooms'][0]['quantity'];
+        if (!empty($data['coupon'])) $params['coupon'] = $data['coupon'];
+
+        return redirect()->route('rooms.checkout', $params);
     }
 
     public function checkout(Request $request, $id)
     {
-        $room = Room::with(['hotel', 'roomType'])->findOrFail($id);
+        $room = Room::with(['hotel.tenant', 'roomType', 'media'])->findOrFail($id);
         $tenant = $room->hotel?->tenant ?? \App\Models\Tenant::find(session('tenant_id')) ?? \App\Models\Tenant::first();
         $navigations = \App\Models\Navigation::active()->ordered()->where(function($q) use ($tenant) {
             if ($tenant) {
@@ -140,22 +223,46 @@ class RoomController extends Controller
         
         $checkIn = $request->get('check_in', $pending['check_in'] ?? now()->format('Y-m-d'));
         $checkOut = $request->get('check_out', $pending['check_out'] ?? now()->addDay()->format('Y-m-d'));
+        $quantity = max(1, (int)$request->get('quantity', $pending['rooms'][0]['quantity'] ?? 1));
         
         $checkInDate = \Carbon\Carbon::parse($checkIn);
         $checkOutDate = \Carbon\Carbon::parse($checkOut);
         $nights = max(1, $checkInDate->diffInDays($checkOutDate));
 
+        // Determine coupon code: prioritize query parameter, then pending session, then room default
+        if ($request->has('coupon')) {
+            $rawCoupon = $request->get('coupon');
+            $couponCode = (empty($rawCoupon) || $rawCoupon === 'none' || $rawCoupon === '__NONE__') ? null : $rawCoupon;
+            if (isset($pending['coupon'])) {
+                if ($couponCode) {
+                    $pending['coupon'] = $couponCode;
+                } else {
+                    unset($pending['coupon']);
+                }
+                session(['pending_booking' => $pending]);
+            }
+        } else {
+            $couponCode = $pending['coupon'] ?? ($room->coupon ?: null);
+        }
+
+        $extraServices = collect($pending['rooms'][0]['extraServices'] ?? [])->pluck('id')->toArray();
+
         // Use PriceCalculationService for backend validation of totals
         $priceService = new PriceCalculationService();
         $calc = $priceService->calculate(
             $room,
-            $pending['rooms'][0]['quantity'] ?? 1,
+            $quantity,
             $nights,
-            collect($pending['rooms'][0]['extraServices'] ?? [])->pluck('id')->toArray(),
-            $pending['coupon'] ?? null
+            $extraServices,
+            $couponCode,
+            $checkIn,
+            now()->format('H:i')
         );
 
-        return view('rooms.checkout', compact('room', 'tenant', 'navigations', 'calc', 'checkIn', 'checkOut', 'nights', 'pending'));
+        // Effective coupon code after validity check
+        $effectiveCoupon = $calc['coupon_code'] ?? null;
+
+        return view('rooms.checkout', compact('room', 'tenant', 'navigations', 'calc', 'checkIn', 'checkOut', 'nights', 'quantity', 'pending', 'couponCode', 'effectiveCoupon'));
     }
 
     public function book(Request $request, $id)
@@ -172,12 +279,17 @@ class RoomController extends Controller
         $bookingService = new BookingService(new PriceCalculationService(), new CouponService());
         
         try {
+            $couponCode = $request->get('coupon_code', $request->get('coupon', $pending['coupon'] ?? null));
+            $quantity = max(1, (int)$request->get('quantity', $pending['rooms'][0]['quantity'] ?? 1));
+            $nights = max(1, \Carbon\Carbon::parse($request->check_in)->diffInDays(\Carbon\Carbon::parse($request->check_out)));
+
             $data = array_merge($request->all(), [
                 'room_id' => $id,
-                'quantity' => $pending['rooms'][0]['quantity'] ?? 1,
-                'nights' => \Carbon\Carbon::parse($request->check_in)->diffInDays(\Carbon\Carbon::parse($request->check_out)),
-                'extra_services' => collect($pending['rooms'][0]['extraServices'] ?? [])->pluck('id')->toArray(),
-                'coupon_code' => $pending['coupon'] ?? null
+                'quantity' => $quantity,
+                'nights' => $nights,
+                'extra_services' => $request->get('extra_services', collect($pending['rooms'][0]['extraServices'] ?? [])->pluck('id')->toArray()),
+                'coupon_code' => $couponCode,
+                'notes' => $request->get('notes')
             ]);
 
             $order = $bookingService->createBooking($data);
@@ -196,7 +308,7 @@ class RoomController extends Controller
 
     public function bookingComplete(Request $request, $orderId)
     {
-        $order = \App\Models\RoomOrder::findOrFail($orderId);
+        $order = \App\Models\RoomOrder::with(['room.hotel', 'room.roomType'])->findOrFail($orderId);
         $tenant = $order->hotel?->tenant ?? \App\Models\Tenant::find(session('tenant_id')) ?? \App\Models\Tenant::first();
         $navigations = \App\Models\Navigation::active()->ordered()->where(function($q) use ($tenant) {
             if ($tenant) {
@@ -208,7 +320,6 @@ class RoomController extends Controller
 
     public function bookAjax(Request $request, $id, PaymentServiceInterface $paymentService, PaymentRepositoryInterface $paymentRepo)
     {   
-        // dd($request->all());
         Log::info('BookAjax request', ['request' => $request->all()]);
         $request->validate([
             'check_in' => 'required|date',
@@ -221,8 +332,7 @@ class RoomController extends Controller
 
         $pending = session('pending_booking', []);
         $bookingService = new BookingService(new PriceCalculationService(), new CouponService());
-        // dd(config('services.stripe'));
-        // If online payment requested, ensure Stripe is configured BEFORE creating the booking
+        
         if ($request->get('payment_method') === 'online') {
             if (!config('services.stripe.key') || !config('services.stripe.secret')) {
                 return response()->json(['status' => 'error', 'message' => 'Payment gateway not configured. Please contact support.'], 500);
@@ -230,16 +340,21 @@ class RoomController extends Controller
         }
 
         try {
+            $couponCode = $request->get('coupon_code', $request->get('coupon', $pending['coupon'] ?? null));
+            $quantity = max(1, (int)$request->get('quantity', $pending['rooms'][0]['quantity'] ?? 1));
+            $nights = max(1, \Carbon\Carbon::parse($request->check_in)->diffInDays(\Carbon\Carbon::parse($request->check_out)));
+
             $data = array_merge($request->all(), [
                 'room_id' => $id,
-                'quantity' => $pending['rooms'][0]['quantity'] ?? 1,
-                'nights' => \Carbon\Carbon::parse($request->check_in)->diffInDays(\Carbon\Carbon::parse($request->check_out)),
-                'extra_services' => collect($pending['rooms'][0]['extraServices'] ?? [])->pluck('id')->toArray(),
-                'coupon_code' => $pending['coupon'] ?? null
+                'quantity' => $quantity,
+                'nights' => $nights,
+                'extra_services' => $request->get('extra_services', collect($pending['rooms'][0]['extraServices'] ?? [])->pluck('id')->toArray()),
+                'coupon_code' => $couponCode,
+                'notes' => $request->get('notes')
             ]);
 
             $order = $bookingService->createBooking($data);
-            // Log::info('Booking created', ['order' => $order]);
+            
             // Update room availability
             $roomService = new RoomService();
             $roomService->updateRoomBookedCount($id, $request->check_in, $request->check_out, $data['quantity']);
@@ -249,12 +364,11 @@ class RoomController extends Controller
             $paymentMethod = $request->get('payment_method');
 
             if ($paymentMethod === 'online') {
-                // Create a PaymentIntent and return client_secret so frontend can collect card
                 $intent = $paymentService->createPaymentIntent($order);
                 return response()->json(['status' => 'intent', 'client_secret' => $intent['client_secret'] ?? null, 'order_id' => $order->id]);
             }
 
-            // Cash payment: do not create a Payment record, only mark order as cash/pending
+            // Cash payment
             $order->update(['payment_method' => 'cash', 'payment_status' => 'pending']);
 
             return response()->json(['status' => 'success', 'redirect' => route('rooms.booking.complete', $order->id)]);

@@ -41,7 +41,48 @@ class CouponController extends Controller
             'hotel_id' => 'nullable|exists:hotels,id',
             'description' => 'nullable|string',
             'image' => 'nullable|image|max:2048',
+
+            // Scheduling and Validity
+            'validity_type' => 'nullable|string|in:all,date,days,time,days_time,custom',
+            'applicable_days' => 'nullable|array',
+            'applicable_days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
+            'start_time' => 'nullable',
+            'end_time' => 'nullable',
+            'time_slot' => 'nullable|string|max:100',
+            'min_spend' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
         ]);
+
+        $validityType = $request->input('validity_type', 'all');
+        $validated['validity_type'] = $validityType;
+
+        // Clean values according to chosen validity type
+        if ($validityType === 'all') {
+            $validated['start_date'] = null;
+            $validated['expire_date'] = null;
+            $validated['applicable_days'] = null;
+            $validated['start_time'] = null;
+            $validated['end_time'] = null;
+            $validated['time_slot'] = 'all_day';
+        } elseif ($validityType === 'date') {
+            $validated['applicable_days'] = null;
+            $validated['start_time'] = null;
+            $validated['end_time'] = null;
+            $validated['time_slot'] = 'all_day';
+        } elseif ($validityType === 'days') {
+            $validated['start_date'] = null;
+            $validated['expire_date'] = null;
+            $validated['start_time'] = null;
+            $validated['end_time'] = null;
+            $validated['time_slot'] = 'all_day';
+        } elseif ($validityType === 'time') {
+            $validated['start_date'] = null;
+            $validated['expire_date'] = null;
+            $validated['applicable_days'] = null;
+        } elseif ($validityType === 'days_time') {
+            $validated['start_date'] = null;
+            $validated['expire_date'] = null;
+        }
 
         $validated['tenant_id'] = tenant()->id;
         $validated['status'] = $request->has('status');
@@ -53,7 +94,7 @@ class CouponController extends Controller
         Coupon::create($validated);
 
         return redirect()->route('admin.coupons.index', ['type' => $validated['type']])
-            ->with('success', ucfirst($validated['type']) . ' created successfully.');
+            ->with('success', ucfirst($validated['type']) . ' created successfully with selected validity rule.');
     }
 
     public function edit($id)
@@ -77,7 +118,52 @@ class CouponController extends Controller
             'hotel_id' => 'nullable|exists:hotels,id',
             'description' => 'nullable|string',
             'image' => 'nullable|image|max:2048',
+
+            // Scheduling and Validity
+            'validity_type' => 'nullable|string|in:all,date,days,time,days_time,custom',
+            'applicable_days' => 'nullable|array',
+            'applicable_days.*' => 'in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
+            'start_time' => 'nullable',
+            'end_time' => 'nullable',
+            'time_slot' => 'nullable|string|max:100',
+            'min_spend' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
         ]);
+
+        $validityType = $request->input('validity_type', $coupon->validity_type ?? 'all');
+        $validated['validity_type'] = $validityType;
+
+        // Clean values according to chosen validity type
+        if ($validityType === 'all') {
+            $validated['start_date'] = null;
+            $validated['expire_date'] = null;
+            $validated['applicable_days'] = null;
+            $validated['start_time'] = null;
+            $validated['end_time'] = null;
+            $validated['time_slot'] = 'all_day';
+        } elseif ($validityType === 'date') {
+            $validated['applicable_days'] = null;
+            $validated['start_time'] = null;
+            $validated['end_time'] = null;
+            $validated['time_slot'] = 'all_day';
+        } elseif ($validityType === 'days') {
+            $validated['start_date'] = null;
+            $validated['expire_date'] = null;
+            $validated['start_time'] = null;
+            $validated['end_time'] = null;
+            $validated['time_slot'] = 'all_day';
+        } elseif ($validityType === 'time') {
+            $validated['start_date'] = null;
+            $validated['expire_date'] = null;
+            $validated['applicable_days'] = null;
+        } elseif ($validityType === 'days_time') {
+            $validated['start_date'] = null;
+            $validated['expire_date'] = null;
+        } else {
+            if (!$request->has('applicable_days')) {
+                $validated['applicable_days'] = null;
+            }
+        }
 
         $validated['status'] = $request->has('status');
 
